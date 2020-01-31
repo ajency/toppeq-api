@@ -37,7 +37,7 @@ def add_message():
         else:
             intentName = response.query_result.intent.display_name
 
-        intentName = intentName.lower().replace("", "_")
+        intentName = intentName.lower().replace(" ", "_")
         result = jsonify({'inputText': response.query_result.query_text, 'accountHead': intentName,
                           'confidence': confidence})
         return result

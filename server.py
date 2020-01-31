@@ -1,6 +1,8 @@
 from __future__ import print_function
 from flask import Flask, request, make_response, jsonify, session
-from accounting_head import account_head
+import sys
+sys.path.append('../controller')
+from controller.accounting_head import account_head
 import os
 
 app = Flask(__name__)

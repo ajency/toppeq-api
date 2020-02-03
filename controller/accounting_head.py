@@ -32,7 +32,7 @@ def add_message():
         confidence = float("{0:.2f}".format(
             response.query_result.intent_detection_confidence * 100))
 
-        if('Default Welcome Intent' in response.query_result.intent.display_name or 'Default Fallback Intent 'in response.query_result.intent.display_name):
+        if('Default Welcome Intent' in response.query_result.intent.display_name or 'Default Fallback Intent'in response.query_result.intent.display_name):
             intentName = 'Others'
         else:
             intentName = response.query_result.intent.display_name

@@ -19,7 +19,7 @@ import re
 
 slot_fill = Blueprint('slot_fill', __name__)
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"C:\Users\Dattaprasad\Downloads\intent.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"intent.json"
 
 client = dialogflow_v2.SessionsClient()
 session = client.session_path('classify-intents-ujpxuu', '1234abcdpqrs')

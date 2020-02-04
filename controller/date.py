@@ -1,6 +1,6 @@
 # import flask dependencies
 from __future__ import print_function
-from flask import Flask, request, make_response, jsonify
+from flask import Flask, request, make_response, jsonify, Blueprint
 from google.cloud import language_v1, language
 from google.cloud.language_v1 import enums, types
 from text2digits import text2digits

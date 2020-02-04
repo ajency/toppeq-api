@@ -9,7 +9,6 @@ from dialogflow_v2 import types
 from google.cloud import language_v1, language
 from google.cloud.language_v1 import enums, types
 from text2digits import text2digits
-from random import randint
 import time
 import dateparser
 import dateutil.relativedelta
@@ -249,9 +248,8 @@ def send_response():
     value = ''
     if(int(float(oldValue.Amount)) != 0):
         value += 'Amount = ' + str(format(int(float(oldValue.Amount)))+', ')
-        
-        value += 'Currency = ' + str(format(oldValue.currency)+', ')
 
+        value += 'Currency = ' + str(format(oldValue.currency)+', ')
 
     value += 'purchaseType = ' + oldValue.ExpenseType + ', '
 
@@ -282,15 +280,15 @@ def send_response():
     # Payment Status
     value += 'paymentStatus = ' + oldValue.paymentStatus+' '
 
-    resultList =  str(req.get('queryResult').get('fulfillmentText'))
+    resultList = str(req.get('queryResult').get('fulfillmentText'))
 
     if(resultList.find('?') == -1):
         result = ''
         result += 'Amount = ' + str(oldValue.Amount) + ' \n '
         result += 'currency = ' + str(oldValue.currency) + ' \n '
         result += 'recurrence = ' + oldValue.recurrence + ' \n '
-        result += 'ExpenseType = ' + oldValue.ExpenseType + ' \n '  
-        result += 'Entities = ' + oldValue.entitySend + ' \n '  
+        result += 'ExpenseType = ' + oldValue.ExpenseType + ' \n '
+        result += 'Entities = ' + oldValue.entitySend + ' \n '
         result += 'Description = ' + oldValue.Description + ' \n '
         try:
             result += 'paymentDate = ' + \
@@ -308,4 +306,3 @@ def send_response():
 
     pprint(vars(oldValue))
     return {'fulfillmentText':  result}
-

@@ -125,6 +125,6 @@ def results():
 
 
 # create a route for webhook
-@amount.route('/amount', methods=['GET', 'POST'])
+@amount.route('/amount/', methods=['GET', 'POST'])
 def webhook():
     return make_response(jsonify(results()))

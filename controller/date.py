@@ -15,7 +15,7 @@ import re
 
 date_object = Blueprint('date', __name__)
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"amount.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../amount.json"
 
 client = language_v1.LanguageServiceClient()
 

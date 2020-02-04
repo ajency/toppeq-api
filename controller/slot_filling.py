@@ -15,11 +15,12 @@ import dateutil.relativedelta
 from datetime import datetime, date, time, timedelta
 from pprint import pprint
 
+from controller.accounting_head import sendResponse
 import re
 
 slot_fill = Blueprint('slot_fill', __name__)
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"intent.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../intent.json"
 
 client = dialogflow_v2.SessionsClient()
 session = client.session_path('classify-intents-ujpxuu', '1234abcdpqrs')
@@ -40,6 +41,8 @@ class lastEntry():
     Description = ''
     currency = defaultCurrency
     fullEntity = 0
+    askFor = 'None'
+    category = 'Others'
 
     def isEmpty(self):
         if self.Amount == '0' and self.Description == '' and self.ExpenseType == '' and self.entitySend == '':
@@ -65,6 +68,17 @@ class lastEntry():
         self.Description = ''
         self.currency = defaultCurrency
         self.fullEntity = 0
+        self.askFor = 'None'
+        self.category = ''
+
+    def emptyList(self):
+        if self.Amount == '0':
+            return 'Amount'
+        if self.paymentDate == '':
+            return 'Date'
+        if self.entitySend == '':
+            return 'Entity'            
+        return 'None'
 
 
 oldValue = lastEntry()
@@ -123,6 +137,8 @@ def send_response():
 
     inputText = str(req.get('queryResult').get('queryText'))
 
+    oldValue.Description = inputText if oldValue.Description == '' else oldValue.Description
+
     inputIntent = str(req.get('queryResult').get('intent').get('displayName'))
 
     filteredText = filterResults(inputText)
@@ -144,6 +160,8 @@ def send_response():
 
     # Price Check
 
+    print('Checking for : '+oldValue.askFor)
+
     # Step 3.1: if price is detected by NLP, mark it with currency
     if(oldValue.Amount == '0'):
         flag = 0
@@ -153,14 +171,14 @@ def send_response():
     if(oldValue.Amount == '0'):
         for entity in response.entities:
             if(enums.Entity.Type(entity.type).name == "PRICE" and flag == 0):
-                oldValue.Amount = entity.metadata[u"value"]
+                oldValue.Amount = float(entity.metadata[u"value"])
                 oldValue.currency = entity.metadata[u"currency"]
                 flag = 1
 
         # Step 3.3 Check from Dialogflow
         if(flag == 0):
             if(req.get('queryResult').get('parameters').get('PRICE')):
-                oldValue.Amount = str(
+                oldValue.Amount = float(
                     req.get('queryResult').get('parameters').get('PRICE'))
                 flag = 1
 
@@ -169,10 +187,10 @@ def send_response():
             maxValue = 0
             for entity in response.entities:
                 if(enums.Entity.Type(entity.type).name == "NUMBER"):
-                    maxValue = int(float(entity.metadata[u"value"])) if(
+                    maxValue = float(entity.metadata[u"value"]) if(
                         int(float(entity.metadata[u"value"])) > int(float(maxValue))) else maxValue
 
-            if(maxValue > 0):
+            if(int(maxValue) > 0):
                 oldValue.Amount = maxValue
                 flag = 1
 
@@ -192,13 +210,26 @@ def send_response():
             oldValue.ExpenseType = "Buy/Purchase"
 
     # Check if Dialogflow had picked up a date (18th, last wednesday)
+    if(oldValue.askFor == 'Date'):
+        oldValue.paymentDate = dateparser.parse(str(filteredText))
+        if(oldValue.paymentDate == None):
+            print('failed to parse data')
+            oldValue.paymentDate = ''
+       
+
+   # if(oldValue.askFor == 'Entity'):
+    #    oldValue.entitySend = str(filteredText)    
+
     if(oldValue.paymentDate == ''):
         if(req.get('queryResult').get('parameters').get('date')):
             oldValue.paymentDate = dateparser.parse(
-                req.get('queryResult').get('parameters').get('date'))
+                str(req.get('queryResult').get('parameters').get('date')))
             if(oldValue.recurrence == "Yes"):
                 oldValue.DueDate = oldValue.paymentDate - \
                     timedelta(days=(oldValue.paymentDate.day-1))
+
+            if(str(int(float(oldValue.Amount))) in str(req.get('queryResult').get('parameters').get('date'))):
+                oldValue.Amount = '0'
 
         # Check if Dialogflow had picked up a date (this month, next june, last year)
         try:
@@ -212,27 +243,32 @@ def send_response():
 
                 # If the number caught by amount is in date, negate that.
                 if(str(int(float(oldValue.Amount))) in str(req.get('queryResult').get('parameters').get('date'))):
-                    oldValue.Amount = 0
+                    oldValue.Amount = '0'
+
         except:
             print('Date Error')
 
     # Checking NLP API for Values
-    if(oldValue.fullEntity == 0):
-        for entity in response.entities:
-            entityDetectList = ["CONSUMER_GOOD", "OTHER", "WORK_OF_ART",
-                                "UNKNOWN", "EVENT", "PERSON", "ORGANIZATION"]
-            # For List of entities
-            if any(x in enums.Entity.Type(entity.type).name for x in entityDetectList):
-                if((entity.name.title() != 'Subscription' or entity.name.title() != 'Rent')):
-                    oldValue.entitySend += (entity.name + ', ')
 
-        # For date
-            if ("DATE" in enums.Entity.Type(entity.type).name):
-                oldValue.paymentDate = dateparser.parse(entity.name)
-                if(oldValue.DueDate == "" and oldValue.recurrence == "Yes"):
-                    oldValue.DueDate = oldValue.paymentDate - \
-                        timedelta(days=(oldValue.paymentDate.day-1))
-        oldValue.fullEntity = 1
+    changeVar = 0
+    for entity in response.entities:
+        entityDetectList = ["CONSUMER_GOOD", "OTHER", "WORK_OF_ART",
+                            "UNKNOWN", "EVENT", "PERSON", "ORGANIZATION"]
+        # For List of entities
+        if any(x in enums.Entity.Type(entity.type).name for x in entityDetectList):
+            if((entity.name.title() != 'Subscription' or entity.name.title() != 'Rent' or entity.name.title() != 'Purchase' )):
+                if(oldValue.fullEntity == 0 and (oldValue.askFor == 'None' or oldValue.askFor == 'Entity')):
+                    oldValue.entitySend += (entity.name + ', ')
+                    changeVar = 1
+
+    # For date
+        if ("DATE" in enums.Entity.Type(entity.type).name):
+            oldValue.paymentDate = dateparser.parse(entity.name)
+            if(oldValue.DueDate == "" and oldValue.recurrence == "Yes"):
+                oldValue.DueDate = oldValue.paymentDate - \
+                    timedelta(days=(oldValue.paymentDate.day-1))
+
+    oldValue.fullEntity = changeVar
 
     # Detect Tense for Paid/Unpaid
     for token in response.tokens:
@@ -243,66 +279,48 @@ def send_response():
                 if(oldValue.paymentDate != ''):
                     oldValue.DueDate = oldValue.paymentDate - \
                         timedelta(days=(oldValue.paymentDate.day-1))
+    
+    listTosend  = {'inputText' :  str(filteredText) }
+    #print(type(sendResponse( json.loads(  json.dumps(listTosend)))))
+    #oldValue.category= json.loads(  json.dumps( sendResponse( json.loads(  json.dumps(listTosend))) )).accountHead
 
-    # Output String
-    value = ''
-    if(int(float(oldValue.Amount)) != 0):
-        value += 'Amount = ' + str(format(int(float(oldValue.Amount)))+', ')
+    result = 'Following is the Output: \n\n'
+    if(oldValue.Amount != '0'):
+        result += ' Amount : ' + str(oldValue.currency)  + str(oldValue.Amount)+ ' \n  \n'
+        result += ' currency : '  ' \n  \n'
 
-        value += 'Currency = ' + str(format(oldValue.currency)+', ')
-
-    value += 'purchaseType = ' + oldValue.ExpenseType + ', '
-
-    # Entities(Expenses for)
-    if(oldValue.entitySend != ''):
-        value += 'Expense For(Entities): ' + str(oldValue.entitySend)+' '
-
-    # description
-    if(oldValue.Description == ''):
-        oldValue.Description = inputText
-        value += 'Description = '+oldValue.Description+', '
-
-    # Recurrence
-    if(oldValue.recurrence == "Yes"):
-        value += 'Recurrence: Yes , Frequency: ' + oldValue.frequency + ', '
-
-    # Due date, Payment Day
+    result += ' Entities : ' + oldValue.entitySend + ' \n  \n'
+    result += ' ExpenseType: ' + oldValue.ExpenseType + ' \n  \n'
+    if('Rent' in oldValue.ExpenseType):
+        result += ' recurrence : ' + oldValue.recurrence + ' \n  \n'
+        if('Yes' in oldValue.recurrence):
+            result += ' Frequency : ' + oldValue.frequency + ' \n  \n'
     try:
-        value += 'PaymentDate = ' + \
-            str(oldValue.paymentDate.strftime(r"%b %d %Y ")) + ', '
+        result += ' paymentDate : ' + \
+            oldValue.paymentDate.strftime(r"%b %d %Y ") + ' \n  \n'
     except:
-        print('Date not Set')
+        print('No date yet')
+    try:
+        result += ' DueDate : ' + \
+            oldValue.DueDate.strftime(r"%b %d %Y ") + ' \n  \n'
+    except:
+        print('No Due Date')
 
-    if(oldValue.DueDate != ""):
-        value += 'Due Date: ' + \
-            str(oldValue.DueDate.strftime(r"%b %d %Y ")) + ', '
+    result += ' Payment Status : ' + oldValue.paymentStatus + ' \n  \n'
 
-    # Payment Status
-    value += 'paymentStatus = ' + oldValue.paymentStatus+' '
+    result += ' Payment Categoty : ' + oldValue.category + ' \n  \n'
 
-    resultList = str(req.get('queryResult').get('fulfillmentText'))
-
-    if(resultList.find('?') == -1):
-        result = ''
-        result += 'Amount = ' + str(oldValue.Amount) + ' \n '
-        result += 'currency = ' + str(oldValue.currency) + ' \n '
-        result += 'recurrence = ' + oldValue.recurrence + ' \n '
-        result += 'ExpenseType = ' + oldValue.ExpenseType + ' \n '
-        result += 'Entities = ' + oldValue.entitySend + ' \n '
-        result += 'Description = ' + oldValue.Description + ' \n '
-        try:
-            result += 'paymentDate = ' + \
-                oldValue.paymentDate.strftime(r"%b %d %Y ") + ' \n '
-        except:
-            print('No date yet')
-        try:
-            result += 'DueDate = ' + \
-                oldValue.DueDate.strftime(r"%b %d %Y ") + ' \n '
-        except:
-            print('No Due Date')
-        oldValue.clearIt()
-    else:
-        result = req.get('queryResult').get('fulfillmentText')
+    print('Missing Value = ' + oldValue.emptyList())
+    oldValue.askFor = oldValue.emptyList()
 
     pprint(vars(oldValue))
+    if 'None' in oldValue.emptyList():
+        oldValue.clearIt()
+    elif 'Amount' in oldValue.emptyList():
+        result = 'How much was the amount for the transaction?'
+    elif 'Date' in oldValue.emptyList():
+        result = 'When did the transaction Occur? '
+    elif 'Entity' in oldValue.emptyList():
+        result = 'What was the transaction done for?'
+
     return {'fulfillmentText':  result}

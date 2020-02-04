@@ -11,7 +11,7 @@ import re
 
 amount = Blueprint('amount', __name__)
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"amount.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../amount.json"
 
 # setting default values which can be configured
 defaultCurrency = 'INR'

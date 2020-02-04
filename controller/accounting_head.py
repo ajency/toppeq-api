@@ -8,16 +8,14 @@ from dialogflow_v2 import types
 
 account_head = Blueprint('account_head', __name__)
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"intent.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../intent.json"
 
 client = dialogflow_v2.SessionsClient()
 session = client.session_path('classify-intents-ujpxuu', 'Testing values')
 
-
-@account_head.route('/accounthead/', methods=['GET', 'POST'])
-def add_message():
-    if(request.json):
-        content = request.json
+def sendResponse(JSONObject):
+    if(JSONObject):
+        content = JSONObject
         text_input = dialogflow_v2.types.TextInput(
             text=content['inputText'], language_code="en")
         query_input = dialogflow_v2.types.QueryInput(text=text_input)
@@ -43,3 +41,10 @@ def add_message():
         return result
     else:
         return "Request Failed."
+
+
+
+@account_head.route('/accounthead/', methods=['GET', 'POST'])
+def add_message():
+    return sendResponse (request.json)
+        

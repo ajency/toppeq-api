@@ -278,7 +278,7 @@ def send_response():
 
     listTosend = {'inputText':  str(filteredText)}
     oldValue.category = json.loads(json.dumps(sendResponse(
-        json.loads(json.dumps(listTosend))))).accountHead
+        json.loads(json.dumps(listTosend)))))['accountHead']
 
     result = 'Following is the Output: \n\n'
     if(oldValue.Amount != '0'):
@@ -305,7 +305,7 @@ def send_response():
 
     result += ' Payment Status : ' + oldValue.paymentStatus + ' \n  \n'
 
-    result += ' Payment Categoty : ' + oldValue.category + ' \n  \n'
+    result += ' Payment Category : ' + oldValue.category + ' \n  \n'
 
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()

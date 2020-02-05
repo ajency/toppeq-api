@@ -15,7 +15,7 @@ import dateutil.relativedelta
 from datetime import datetime, date, time, timedelta
 from pprint import pprint
 
-from accounting_head import sendResponse
+from controller.accounting_head import sendResponse
 import re
 
 slot_fill = Blueprint('slot_fill', __name__)
@@ -305,7 +305,7 @@ def send_response():
     result += ' Entities : ' + oldValue.entitySend + ' \n  \n'
     result += ' ExpenseType: ' + oldValue.ExpenseType + ' \n  \n'
     if('Rent' in oldValue.ExpenseType):
-        result += ' recurrence : ' + oldValue.recurrence + ' \n  \n'
+        result += ' Recurrence : ' + oldValue.recurrence + ' \n  \n'
         if('Yes' in oldValue.recurrence):
             result += ' Frequency : ' + oldValue.frequency + ' \n  \n'
 
@@ -313,7 +313,7 @@ def send_response():
 
     if(oldValue.paymentStatus == 'Paid'):
         try:
-            result += ' paymentDate : ' + \
+            result += ' Payment Date : ' + \
                 oldValue.paymentDate.strftime(r"%b %d %Y ") + ' \n  \n'
         except:
             print('No date yet')
@@ -323,7 +323,7 @@ def send_response():
         except:
             print('No Due Date')
 
-    result += ' Accounting Subhead : ' + oldValue.category + ' \n  \n'
+    result += ' Category : ' + oldValue.category + ' \n  \n'
 
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()

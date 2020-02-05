@@ -143,7 +143,7 @@ def send_response():
     oldValue.Description = inputText if oldValue.Description == '' else oldValue.Description
 
     oldValue.category = sendResponse(
-        {'inputText': oldValue.Description}) if oldValue.category == '' else oldValue.category
+        {'inputText': oldValue.Description})['accountHead'] if oldValue.category == '' else oldValue.category
 
     inputIntent = str(req.get('queryResult').get('intent').get('displayName'))
 

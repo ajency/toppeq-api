@@ -38,7 +38,7 @@ def sendResponse(JSONObject):
 
         intentName = intentName.lower().replace(" ", "_")
         result = {'inputText': response.query_result.query_text, 'accountHead': intentName,
-                   'confidence': confidence}
+                   'confidence': confidence, 'outflow_tags': ["stationery", "office", "supplies"] }
         return result
     else:
         return "Request Failed."

@@ -215,7 +215,7 @@ def send_response():
             oldValue.ExpenseType = "Buy/Purchase"
 
     elif(oldValue.askFor == 'Frequency'):
-        textString = filteredText.lower()
+            textString = filteredText.lower()
             if("weekly" in textString or "per week" in textString):
                 oldValue.frequency = "Weekly"
             elif("yearly" in textString or "per year" in textString or "annual" in textString):

@@ -10,7 +10,7 @@ account_head = Blueprint('account_head', __name__)
 
 def sendResponse(JSONObject):
     if(JSONObject):
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../intent.json"
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../../intent.json"
         client = dialogflow_v2.SessionsClient()
         session = client.session_path('classify-intents-ujpxuu', 'Testing values')
         content = JSONObject

@@ -6,6 +6,8 @@ import json
 import dialogflow_v2
 from dialogflow_v2 import types
 
+[sys.path.append(i) for i in ['.', '..']]
+
 account_head = Blueprint('account_head', __name__)
 
 def sendResponse(JSONObject):

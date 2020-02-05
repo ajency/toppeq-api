@@ -8,14 +8,11 @@ from dialogflow_v2 import types
 
 account_head = Blueprint('account_head', __name__)
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../intent.json"
-
-client = dialogflow_v2.SessionsClient()
-session = client.session_path('classify-intents-ujpxuu', 'Testing values')
-
-
 def sendResponse(JSONObject):
     if(JSONObject):
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../intent.json"
+        client = dialogflow_v2.SessionsClient()
+        session = client.session_path('classify-intents-ujpxuu', 'Testing values')
         content = JSONObject
         text_input = dialogflow_v2.types.TextInput(
             text=content['inputText'], language_code="en")

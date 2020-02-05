@@ -15,7 +15,7 @@ import dateutil.relativedelta
 from datetime import datetime, date, time, timedelta
 from pprint import pprint
 
-from controller.accounting_head import sendResponse
+from accounting_head import sendResponse
 import re
 
 slot_fill = Blueprint('slot_fill', __name__)

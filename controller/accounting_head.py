@@ -13,6 +13,7 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../intent.json"
 client = dialogflow_v2.SessionsClient()
 session = client.session_path('classify-intents-ujpxuu', 'Testing values')
 
+
 def sendResponse(JSONObject):
     if(JSONObject):
         content = JSONObject
@@ -36,15 +37,13 @@ def sendResponse(JSONObject):
             intentName = response.query_result.intent.display_name
 
         intentName = intentName.lower().replace(" ", "_")
-        result = jsonify({'inputText': response.query_result.query_text, 'accountHead': intentName,
-                          'confidence': confidence})
+        result = {'inputText': response.query_result.query_text, 'accountHead': intentName,
+                   'confidence': confidence}
         return result
     else:
         return "Request Failed."
 
 
-
 @account_head.route('/accounthead/', methods=['GET', 'POST'])
 def add_message():
-    return sendResponse (request.json)
-        
+    return jsonify(sendResponse(request.json))

@@ -77,7 +77,7 @@ class lastEntry():
         if self.paymentDate == '':
             return 'Date'
         if self.entitySend == '':
-            return 'Entity'            
+            return 'Entity'
         return 'None'
 
 
@@ -215,10 +215,6 @@ def send_response():
         if(oldValue.paymentDate == None):
             print('failed to parse data')
             oldValue.paymentDate = ''
-       
-
-   # if(oldValue.askFor == 'Entity'):
-    #    oldValue.entitySend = str(filteredText)    
 
     if(oldValue.paymentDate == ''):
         if(req.get('queryResult').get('parameters').get('date')):
@@ -256,7 +252,7 @@ def send_response():
                             "UNKNOWN", "EVENT", "PERSON", "ORGANIZATION"]
         # For List of entities
         if any(x in enums.Entity.Type(entity.type).name for x in entityDetectList):
-            if((entity.name.title() != 'Subscription' or entity.name.title() != 'Rent' or entity.name.title() != 'Purchase' )):
+            if((entity.name.title() != 'Subscription' or entity.name.title() != 'Rent' or entity.name.title() != 'Purchase')):
                 if(oldValue.fullEntity == 0 and (oldValue.askFor == 'None' or oldValue.askFor == 'Entity')):
                     oldValue.entitySend += (entity.name + ', ')
                     changeVar = 1
@@ -279,14 +275,15 @@ def send_response():
                 if(oldValue.paymentDate != ''):
                     oldValue.DueDate = oldValue.paymentDate - \
                         timedelta(days=(oldValue.paymentDate.day-1))
-    
-    listTosend  = {'inputText' :  str(filteredText) }
-    #print(type(sendResponse( json.loads(  json.dumps(listTosend)))))
-    #oldValue.category= json.loads(  json.dumps( sendResponse( json.loads(  json.dumps(listTosend))) )).accountHead
+
+    listTosend = {'inputText':  str(filteredText)}
+    oldValue.category = json.loads(json.dumps(sendResponse(
+        json.loads(json.dumps(listTosend))))).accountHead
 
     result = 'Following is the Output: \n\n'
     if(oldValue.Amount != '0'):
-        result += ' Amount : ' + str(oldValue.currency)  + str(oldValue.Amount)+ ' \n  \n'
+        result += ' Amount : ' + \
+            str(oldValue.currency) + str(oldValue.Amount) + ' \n  \n'
         result += ' currency : '  ' \n  \n'
 
     result += ' Entities : ' + oldValue.entitySend + ' \n  \n'

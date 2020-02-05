@@ -141,7 +141,9 @@ def send_response():
     inputText = str(req.get('queryResult').get('queryText'))
 
     oldValue.Description = inputText if oldValue.Description == '' else oldValue.Description
-
+    
+    oldValue.category = sendResponse({'inputText':oldValue.Description}) if oldValue.category == '' else oldValue.category 
+    
     inputIntent = str(req.get('queryResult').get('intent').get('displayName'))
 
     filteredText = filterResults(inputText)

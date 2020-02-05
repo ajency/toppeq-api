@@ -34,7 +34,7 @@ class lastEntry():
     entitySend = ''
     ExpenseType = ""
     recurrence = "No"
-    frequency = "Monthly"
+    frequency = ""
     paymentDate = ''
     DueDate = ""
     paymentStatus = 'Pending'
@@ -61,7 +61,7 @@ class lastEntry():
         self.entitySend = ''
         self.ExpenseType = ""
         self.recurrence = "No"
-        self.frequency = "Monthly"
+        self.frequency = ""
         self.paymentDate = ''
         self.DueDate = ""
         self.paymentStatus = 'Unpaid'
@@ -78,6 +78,9 @@ class lastEntry():
             return 'Date'
         if self.entitySend == '':
             return 'Entity'
+        if self.frequency == '' and self.recurrence == 'Yes':
+            return 'Frequency'
+        
         return 'None'
 
 
@@ -195,7 +198,7 @@ def send_response():
                 flag = 1
 
   # Step 3.5 Detect Recurrence
-
+    
     if(oldValue.ExpenseType == ''):
         if(req.get('queryResult').get('intent').get('displayName') == "checkRentExpense"):
             oldValue.recurrence = "Yes"
@@ -206,8 +209,19 @@ def send_response():
                 oldValue.frequency = "Weekly"
             elif("yearly" in textString or "per year" in textString or "annual" in textString):
                 oldValue.frequency = "Yearly"
+            elif("monthly" in textString or "per month" in textString or "every month" in textString):
+                oldValue.frequency = "Monthly"
         else:
             oldValue.ExpenseType = "Buy/Purchase"
+
+    elif(oldValue.askFor == 'Frequency'):
+        textString = filteredText.lower()
+            if("weekly" in textString or "per week" in textString):
+                oldValue.frequency = "Weekly"
+            elif("yearly" in textString or "per year" in textString or "annual" in textString):
+                oldValue.frequency = "Yearly"
+            elif("monthly" in textString or "per month" in textString or "every month" in textString):
+                oldValue.frequency = "Monthly"
 
     # Check if Dialogflow had picked up a date (18th, last wednesday)
     if(oldValue.askFor == 'Date'):
@@ -283,8 +297,7 @@ def send_response():
     result = 'Following is the Output: \n\n'
     if(oldValue.Amount != '0'):
         result += ' Amount : ' + \
-            str(oldValue.currency) + str(oldValue.Amount) + ' \n  \n'
-        result += ' currency : '  ' \n  \n'
+            str(oldValue.currency) +' '+ str(oldValue.Amount) + ' \n  \n'
 
     result += ' Entities : ' + oldValue.entitySend + ' \n  \n'
     result += ' ExpenseType: ' + oldValue.ExpenseType + ' \n  \n'
@@ -292,18 +305,22 @@ def send_response():
         result += ' recurrence : ' + oldValue.recurrence + ' \n  \n'
         if('Yes' in oldValue.recurrence):
             result += ' Frequency : ' + oldValue.frequency + ' \n  \n'
-    try:
-        result += ' paymentDate : ' + \
-            oldValue.paymentDate.strftime(r"%b %d %Y ") + ' \n  \n'
-    except:
-        print('No date yet')
-    try:
-        result += ' DueDate : ' + \
-            oldValue.DueDate.strftime(r"%b %d %Y ") + ' \n  \n'
-    except:
-        print('No Due Date')
-
+    
     result += ' Payment Status : ' + oldValue.paymentStatus + ' \n  \n'
+
+    if(oldValue.paymentStatus == 'Paid'):
+        try:
+            result += ' paymentDate : ' + \
+                oldValue.paymentDate.strftime(r"%b %d %Y ") + ' \n  \n'
+        except:
+            print('No date yet')
+        try:
+            result += ' DueDate : ' + \
+                oldValue.DueDate.strftime(r"%b %d %Y ") + ' \n  \n'
+        except:
+            print('No Due Date')
+
+   
 
     result += ' Payment Category : ' + oldValue.category + ' \n  \n'
 
@@ -319,5 +336,7 @@ def send_response():
         result = 'When did the transaction Occur? '
     elif 'Entity' in oldValue.emptyList():
         result = 'What was the transaction done for?'
+    elif 'Frequency' in oldValue.emptyList():
+        result = 'How freqently you want the transaction to repeat? \n (Yearly, Monthly, Weekly)'
 
     return {'fulfillmentText':  result}

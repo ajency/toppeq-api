@@ -90,6 +90,7 @@ def getTags(JSONObject):
                 intentName = 'Others' if intentName == 'Default Fallback Intent' else intentName
                 listEntityname.append(intentName)
             #
+            listEntityname = list(set(listEntityname))
         return {'outflow_tags': listEntityname}
     else:
         return {}

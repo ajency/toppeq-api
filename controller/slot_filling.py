@@ -301,14 +301,14 @@ def send_response():
         oldValue.category = oldValue.category.replace('_', " ").title()
 
     #get Tags
-   """  tempList = []
-    if(oldValue.tags == []):
-        tempList = json.loads(json.dumps(getTags(
-            json.loads(json.dumps(listTosend)))))['outflow_tags']
+    #tempList = []
+    #if(oldValue.tags == []):
+        #tempList = json.loads(json.dumps(getTags(
+            #json.loads(json.dumps(listTosend)))))['outflow_tags']
 
-        oldValue.tags.append(oldValue.category.title())
-        for string in tempList:
-            oldValue.tags.append(string.title()) """
+        #oldValue.tags.append(oldValue.category.title())
+        f#or string in tempList:
+            #oldValue.tags.append(string.title()) 
 
     result = 'Following is the Output: \n\n'
     if(oldValue.Amount != '0'):

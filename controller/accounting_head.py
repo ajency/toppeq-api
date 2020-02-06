@@ -5,17 +5,20 @@ import os
 import json
 import dialogflow_v2
 from dialogflow_v2 import types
+from google.cloud import language_v1, language
+from google.cloud.language_v1 import enums, types
 
 account_head = Blueprint('account_head', __name__)
-
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../intent.json"
-
-client = dialogflow_v2.SessionsClient()
-session = client.session_path('classify-intents-ujpxuu', 'Testing values')
 
 
 def sendResponse(JSONObject):
     if(JSONObject):
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../intent.json"
+
+        client = dialogflow_v2.SessionsClient()
+        session = client.session_path(
+            'classify-intents-ujpxuu', 'Testing values')
+
         content = JSONObject
         text_input = dialogflow_v2.types.TextInput(
             text=content['inputText'], language_code="en")
@@ -38,12 +41,64 @@ def sendResponse(JSONObject):
 
         intentName = intentName.lower().replace(" ", "_")
         result = {'inputText': response.query_result.query_text, 'accountHead': intentName,
-                   'confidence': confidence, 'outflow_tags': ["stationery", "office", "supplies"] }
+                  'confidence': confidence}
         return result
     else:
         return "Request Failed."
 
 
+def getTags(JSONObject):
+    if(JSONObject):
+        content = JSONObject
+        # Call NLP API
+        client1 = language_v1.LanguageServiceClient()
+        document = language.types.Document(
+            content=content['inputText'],
+            type=language.enums.Document.Type.PLAIN_TEXT
+        )
+        features = language.types.AnnotateTextRequest.Features(
+            extract_syntax=True,
+            extract_entities=True,
+            extract_document_sentiment=False,
+            extract_entity_sentiment=False,
+            classify_text=False)
+
+        response = client1.annotate_text(document, features)
+        listEntity = []
+        listEntityname = []
+
+        # from all entities
+        for entity in response.entities:
+            if(enums.Entity.Type(entity.type).name != "PRICE"):
+                listEntity.append(entity.name)
+            # call to Dialogflow
+                os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../tags.json"
+                client = dialogflow_v2.SessionsClient()
+                session = client.session_path(
+                    'slotfilling1-hyalrc', '1234abcdd')
+                text_input = dialogflow_v2.types.TextInput(
+                    text=entity.name, language_code="en")
+                query_input = dialogflow_v2.types.QueryInput(text=text_input)
+                response = client.detect_intent(
+                    session=session, query_input=query_input)
+
+                print('Query text: {}'.format(response.query_result.query_text))
+                print('Detected intent: {} (confidence: {})\n'.format(
+                    response.query_result.intent.display_name,
+                    response.query_result.intent_detection_confidence))
+                intentName = response.query_result.intent.display_name
+                intentName = 'Others' if intentName == 'Default Fallback Intent' else intentName
+                listEntityname.append(intentName)
+            #
+        return {'outflow_tags': listEntityname}
+    else:
+        return {}
+
+
 @account_head.route('/accounthead/', methods=['GET', 'POST'])
 def add_message():
-    return jsonify(sendResponse(request.json))
+    acHead = sendResponse(request.json)
+    tags = getTags(request.json)
+    acHead.update(tags)
+    print(acHead)
+    return jsonify(acHead)

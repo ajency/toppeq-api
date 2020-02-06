@@ -306,6 +306,7 @@ def send_response():
         tempList = json.loads(json.dumps(getTags(
             json.loads(json.dumps(listTosend)))))['outflow_tags']
 
+        oldValue.tags.append(oldValue.category.title())
         for string in tempList:
             oldValue.tags.append(string.title())
         #oldValue.tags = oldValue.category.replace('_', " ").title()
@@ -338,7 +339,7 @@ def send_response():
 
     result += ' Payment Category : ' + oldValue.category + ' \n  \n'
     result += ' Tags : ' + ' '.join(oldValue.tags) + ' \n  \n'
-    
+
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()
 

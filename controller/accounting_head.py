@@ -3,6 +3,7 @@ from flask import Flask, request, make_response, jsonify, session, Blueprint
 import sys
 import os
 import json
+import re
 import dialogflow_v2
 from dialogflow_v2 import types
 from google.cloud import language_v1, language
@@ -64,14 +65,12 @@ def getTags(JSONObject):
             classify_text=False)
 
         response = client1.annotate_text(document, features)
-        listEntity = []
         listEntityname = []
 
         # from all entities
         for entity in response.entities:
-            if(enums.Entity.Type(entity.type).name != "PRICE"):
-                listEntity.append(entity.name)
-            # call to Dialogflow
+            if(enums.Entity.Type(entity.type).name != "PRICE" or enums.Entity.Type(entity.type).name != "DATE"):
+                # call to Dialogflow
                 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../tags.json"
                 client = dialogflow_v2.SessionsClient()
                 session = client.session_path(
@@ -87,10 +86,14 @@ def getTags(JSONObject):
                     response.query_result.intent.display_name,
                     response.query_result.intent_detection_confidence))
                 intentName = response.query_result.intent.display_name
-                intentName = 'Others' if intentName == 'Default Fallback Intent' else intentName
-                listEntityname.append(intentName)
-            #
-            listEntityname = list(set(listEntityname))
+                if(intentName != 'Default Fallback Intent'):
+                    listEntityname.append(intentName)
+
+        if(not listEntityname):
+            listEntityname.append('Others')
+        # remove duplicates
+        print(listEntityname)
+        listEntityname = list(set(listEntityname))
         return {'outflow_tags': listEntityname}
     else:
         return {}
@@ -101,5 +104,7 @@ def add_message():
     acHead = sendResponse(request.json)
     tags = getTags(request.json)
     acHead.update(tags)
-    print(acHead)
+    newList = list(acHead["outflow_tags"])
+    newList.append(acHead["accountHead"])
+    acHead["outflow_tags"] = newList
     return jsonify(acHead)

@@ -41,7 +41,7 @@ def results():
     try:
         value = 'Payment Date: ' + str(paymentDate.strftime(r"%b %d %Y "))
     except:
-       if dateparser.parse(inputText) == 'None':
+        if dateparser.parse(inputText) == 'None':
             value = 'Date Not Readable'
         else:
             value =  'Payment Date: '+ str(dateparser.parse(inputText).strftime(r"%b %d %Y "))

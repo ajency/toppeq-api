@@ -90,7 +90,7 @@ def getTags(JSONObject):
                     listEntityname.append(intentName)
 
         if(not listEntityname):
-            listEntityname.append('Others')
+            listEntityname.append('Miscellaneous')
         # remove duplicates
         print(listEntityname)
         listEntityname = list(set(listEntityname))

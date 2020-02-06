@@ -38,7 +38,13 @@ def results():
             req.get('queryResult').get('parameters').get('date-period').get('endDate'))
 
     # Output String
-    value = 'Payment Date: ' + str(paymentDate.strftime(r"%b %d %Y "))
+    try:
+        value = 'Payment Date: ' + str(paymentDate.strftime(r"%b %d %Y "))
+    except:
+       if dateparser.parse(inputText) == 'None':
+            value = 'Date Not Readable'
+        else:
+            value =  'Payment Date: '+ str(dateparser.parse(inputText).strftime(r"%b %d %Y "))
 
     # Return the string to Dialogflow
     return {'fulfillmentText':  value}

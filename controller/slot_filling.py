@@ -294,6 +294,7 @@ def send_response():
     if(oldValue.category == ''):
         oldValue.category = json.loads(json.dumps(sendResponse(
             json.loads(json.dumps(listTosend)))))['accountHead']
+        oldValue.category = oldValue.category.replace('_'," ").title()
 
     result = 'Following is the Output: \n\n'
     if(oldValue.Amount != '0'):

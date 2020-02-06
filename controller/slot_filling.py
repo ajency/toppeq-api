@@ -43,7 +43,7 @@ class lastEntry():
     fullEntity = 0
     askFor = 'None'
     category = ''
-    tags = []
+    #tags = []
 
     def isEmpty(self):
         if self.Amount == '0' and self.Description == '' and self.ExpenseType == '' and self.entitySend == '':
@@ -71,7 +71,7 @@ class lastEntry():
         self.fullEntity = 0
         self.askFor = 'None'
         self.category = ''
-        self.tags = []
+        #self.tags = []
 
     def emptyList(self):
         if self.Amount == '0':
@@ -301,15 +301,14 @@ def send_response():
         oldValue.category = oldValue.category.replace('_', " ").title()
 
     #get Tags
-    tempList = []
+   """  tempList = []
     if(oldValue.tags == []):
         tempList = json.loads(json.dumps(getTags(
             json.loads(json.dumps(listTosend)))))['outflow_tags']
 
         oldValue.tags.append(oldValue.category.title())
         for string in tempList:
-            oldValue.tags.append(string.title())
-        #oldValue.tags = oldValue.category.replace('_', " ").title()
+            oldValue.tags.append(string.title()) """
 
     result = 'Following is the Output: \n\n'
     if(oldValue.Amount != '0'):
@@ -338,7 +337,7 @@ def send_response():
             print('No Due Date')
 
     result += ' Payment Category : ' + oldValue.category + ' \n  \n'
-    result += ' Tags : ' + ' '.join(oldValue.tags) + ' \n  \n'
+    #result += ' Tags : ' + ' '.join(oldValue.tags) + ' \n  \n'
 
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()

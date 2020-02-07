@@ -6,36 +6,27 @@ import json
 import re
 import dialogflow_v2
 from dialogflow_v2 import types
-<<<<<<< HEAD
+
 from google.cloud import language_v1, language
 from google.cloud.language_v1 import enums, types
 
-=======
+
 from google.oauth2.service_account import Credentials
 
 [sys.path.append(i) for i in ['.', '..']]
 
->>>>>>> master
+
 account_head = Blueprint('account_head', __name__)
 
 
 def sendResponse(JSONObject):
     if(JSONObject):
-<<<<<<< HEAD
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../intent.json"
-
-        client = dialogflow_v2.SessionsClient()
-        session = client.session_path(
-            'classify-intents-ujpxuu', 'Testing values')
-
-=======
-
         credentials = Credentials.from_service_account_file("../intent.json")
         client = dialogflow_v2.SessionsClient(credentials=credentials)
 
         session = client.session_path(
             'classify-intents-ujpxuu', 'Testing values')
->>>>>>> master
+
         content = JSONObject
         text_input = dialogflow_v2.types.TextInput(
             text=content['inputText'], language_code="en")
@@ -58,11 +49,8 @@ def sendResponse(JSONObject):
 
         intentName = intentName.lower().replace(" ", "_")
         result = {'inputText': response.query_result.query_text, 'accountHead': intentName,
-<<<<<<< HEAD
-                  'confidence': confidence}
-=======
                   'confidence': confidence, 'outflow_tags': ["stationery", "office", "supplies"]}
->>>>>>> master
+
         return result
     else:
         return "Request Failed."

@@ -76,7 +76,7 @@ class lastEntry():
     def emptyList(self):
         if self.Amount == '0':
             return 'Amount'
-        if self.paymentDate == '' and self.paymentStatus == 'Paid':
+        if self.paymentDate == '' and self.paymentStatus == 'Paid' and self.ExpenseType != "Rent/Subscription":
             return 'Date'
         if self.entitySend == '':
             return 'Entity'
@@ -134,6 +134,27 @@ def lowerCaps(text):
 def filterResults(text):
     op = removeConsecutiveSpaces(convertWordstoNum(removeStopwords(text)))
     return lowerCaps(op)
+
+
+def mapAChead(acHead):
+    AcHeadMap = {
+        "office_expenses": 2,
+        "advertising_and_marketing": 3,
+        "employee_benefits": 5,
+        "professional_fees": 6,
+        "professional_fees": 1,
+        "education_and_training": 7,
+        "rent": 8,
+        "travel": 9,
+        "bank_charges": 10,
+        "general_and_administrative_expenses": 11,
+        "it_expense": 12,
+        "cost_of_goods_sold": 13,
+        "others": 15}
+    if (AcHeadMap[acHead]):
+        return AcHeadMap[acHead]
+    else:
+        return 15
 
 
 @slot_fill.route('/slotfill/', methods=['GET', 'POST'])
@@ -293,24 +314,24 @@ def send_response():
                         timedelta(days=(oldValue.paymentDate.day-1))
 
     listTosend = {'inputText':  str(filteredText)}
-    
-    #Get Account Head
+
+    # Get Account Head
     if(oldValue.category == ''):
         oldValue.category = json.loads(json.dumps(sendResponse(
             json.loads(json.dumps(listTosend)))))['accountHead']
         oldValue.category = oldValue.category.replace('_', " ").title()
 
-    #get Tags
+    # get Tags
     #tempList = []
-    #if(oldValue.tags == []):
-        #tempList = json.loads(json.dumps(getTags(
-            #json.loads(json.dumps(listTosend)))))['outflow_tags']
+    # if(oldValue.tags == []):
+        # tempList = json.loads(json.dumps(getTags(
+        # json.loads(json.dumps(listTosend)))))['outflow_tags']
 
-        #oldValue.tags.append(oldValue.category.title())
-        #for string in tempList:
-            #oldValue.tags.append(string.title()) 
+        # oldValue.tags.append(oldValue.category.title())
+        # for string in tempList:
+        # oldValue.tags.append(string.title())
 
-    result = ': \n\n'
+    result = 'Expense recorded as: \n\n'
     if(oldValue.Amount != '0'):
         result += ' Amount : ' + \
             str(oldValue.currency) + ' ' + str(oldValue.Amount) + ' \n  \n'
@@ -344,7 +365,9 @@ def send_response():
 
     pprint(vars(oldValue))
     if 'None' in oldValue.emptyList():
+
         oldValue.clearIt()
+
     elif 'Amount' in oldValue.emptyList():
         result = 'How much was the amount for the transaction?'
     elif 'Date' in oldValue.emptyList():

@@ -138,6 +138,7 @@ def filterResults(text):
 
 
 def mapAChead(acHead):
+    acHead = acHead.replace(' ','_').lower()
     AcHeadMap = {
         "office_expenses": 2,
         "advertising_and_marketing": 3,

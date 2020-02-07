@@ -4,6 +4,7 @@ import sys
 import os
 import json
 import dialogflow_v2
+import requests
 from dialogflow_v2 import types
 
 from google.cloud import language_v1, language
@@ -43,7 +44,7 @@ class lastEntry():
     fullEntity = 0
     askFor = 'None'
     category = ''
-    #tags = []
+    # tags = []
 
     def isEmpty(self):
         if self.Amount == '0' and self.Description == '' and self.ExpenseType == '' and self.entitySend == '':
@@ -71,12 +72,12 @@ class lastEntry():
         self.fullEntity = 0
         self.askFor = 'None'
         self.category = ''
-        #self.tags = []
+        # self.tags = []
 
     def emptyList(self):
         if self.Amount == '0':
             return 'Amount'
-        if self.paymentDate == '' and self.paymentStatus == 'Paid' and self.ExpenseType != "Rent/Subscription":
+        if self.paymentDate == '' and self.paymentStatus == 'Paid':
             return 'Date'
         if self.entitySend == '':
             return 'Entity'
@@ -322,7 +323,7 @@ def send_response():
         oldValue.category = oldValue.category.replace('_', " ").title()
 
     # get Tags
-    #tempList = []
+    # tempList = []
     # if(oldValue.tags == []):
         # tempList = json.loads(json.dumps(getTags(
         # json.loads(json.dumps(listTosend)))))['outflow_tags']
@@ -358,20 +359,28 @@ def send_response():
             print('No Due Date')
 
     result += ' Payment Category : ' + oldValue.category + ' \n  \n'
-    #result += ' Tags : ' + ' '.join(oldValue.tags) + ' \n  \n'
+    # result += ' Tags : ' + ' '.join(oldValue.tags) + ' \n  \n'
 
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()
 
     pprint(vars(oldValue))
     if 'None' in oldValue.emptyList():
+        
 
+        url = "https://ajency-qa.api.toppeq.com/graphql"
+
+        payload = "{\r\n\"operationName\": \"CreateExpense\",\r\n\"variables\": {\r\n\"input\": {\r\n\"company\": 2,\r\n\"title\": \" "+oldValue.Description +"\",\r\n\"description\": \"expense\",\r\n\"amount\": "+oldValue.Amount+",\r\n\"accountingHeadId\": "+mapAChead(oldValue.category)+",\r\n\"recurring\": "+ "true" if('Yes' in oldValue.recurrence) else "false"+",\r\n\"expenseRecurrence\": {\r\n\"frequency\": \" "+oldValue.frequency+" \"\r\n},\r\n\"status\": \"draft\"\r\n}\r\n},\r\n\"query\": \"mutation CreateExpense($input: ExpenseInput) {\\n createExpense(input: $input) {\\n id\\n referenceId\\n }\\n}\\n\"\r\n}"
+        headers = {        'Content-Type': 'application/json'        }
+
+        response = requests.request("POST", url, headers=headers, data=payload)
+        print(response)
         oldValue.clearIt()
 
     elif 'Amount' in oldValue.emptyList():
         result = 'How much was the amount for the transaction?'
     elif 'Date' in oldValue.emptyList():
-        result = 'When did the transaction Occur? '
+        result = 'What is the date of the transaction? '
     elif 'Entity' in oldValue.emptyList():
         result = 'What was the transaction done for?'
     elif 'Frequency' in oldValue.emptyList():

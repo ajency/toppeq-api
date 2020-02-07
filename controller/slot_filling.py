@@ -366,33 +366,31 @@ def send_response():
 
     pprint(vars(oldValue))
     if 'None' in oldValue.emptyList():
+        url = "https://ajency-qa.api.toppeq.com/graphql"
 
-        
-            url = "https://ajency-qa.api.toppeq.com/graphql"
+        # payload = "{\r\n\"operationName\": \"CreateExpense\",\r\n\"variables\": {\r\n\"input\": {\r\n\"company\": 2,\r\n\"title\": \" "+oldValue.Description + "\",\r\n\"description\": \"expense\",\r\n\"amount\": "+oldValue.Amount+",\r\n\"accountingHeadId\": "+mapAChead(oldValue.category)+",\r\n\"recurring\": " + "true" if(
+        #     'Yes' in oldValue.recurrence) else "false"+",\r\n\"expenseRecurrence\": {\r\n\"frequency\": \" "+oldValue.frequency+" \"\r\n},\r\n\"status\": \"draft\"\r\n}\r\n},\r\n\"query\": \"mutation CreateExpense($input: ExpenseInput) {\\n createExpense(input: $input) {\\n id\\n referenceId\\n }\\n}\\n\"\r\n}"
 
-            # payload = "{\r\n\"operationName\": \"CreateExpense\",\r\n\"variables\": {\r\n\"input\": {\r\n\"company\": 2,\r\n\"title\": \" "+oldValue.Description + "\",\r\n\"description\": \"expense\",\r\n\"amount\": "+oldValue.Amount+",\r\n\"accountingHeadId\": "+mapAChead(oldValue.category)+",\r\n\"recurring\": " + "true" if(
-            #     'Yes' in oldValue.recurrence) else "false"+",\r\n\"expenseRecurrence\": {\r\n\"frequency\": \" "+oldValue.frequency+" \"\r\n},\r\n\"status\": \"draft\"\r\n}\r\n},\r\n\"query\": \"mutation CreateExpense($input: ExpenseInput) {\\n createExpense(input: $input) {\\n id\\n referenceId\\n }\\n}\\n\"\r\n}"
-
-            # payload = "{\r\n\"operationName\": \"CreateExpense\",\r\n\"variables\": {\r\n\"input\": {\r\n\"company\": \"2\",\r\n\"title\": "+oldValue.Description + ",\r\n\"description\": \"expense\",\r\n\"amount\": "+oldValue.Amount+",\r\n\"accountingHeadId\": \""+mapAChead(
-            #     oldValue.category)+"\",\r\n\"paymentStatus\": "+oldValue.paymentStatus+",\r\n\"recurring\": " + True if('Yes' in oldValue.recurrence) else False+",\r\n\"status\": \"draft\"\r\n}\r\n},\r\n\"query\": \"mutation CreateExpense($input: ExpenseInput) {\\n  createExpense(input: $input) {\\n    id\\n    referenceId\\n   }\\n}\\n\"\r\n}"
-            payload = {
-                "operationName": "CreateExpense",
-                "variables": {
-                    "input": {
-                        "company": "2",
-                        "title": oldValue.Description ,
-                        "description": oldValue.Description,
-                        "amount": oldValue.Amount,
-                        "accountingHeadId": mapAChead(oldValue.category),
-                        "paymentStatus": oldValue.paymentStatus,
-                        "recurring": True if('Yes' in oldValue.recurrence) else False,
-                        "status": "draft"
-                    }
-                },
-                "query": "mutation CreateExpense($input: ExpenseInput) {\n  createExpense(input: $input) {\n    id\n    referenceId\n   }\n}\n"
-            }
-            headers = {'Content-Type': 'application/json'}
-            print(payload)
+        # payload = "{\r\n\"operationName\": \"CreateExpense\",\r\n\"variables\": {\r\n\"input\": {\r\n\"company\": \"2\",\r\n\"title\": "+oldValue.Description + ",\r\n\"description\": \"expense\",\r\n\"amount\": "+oldValue.Amount+",\r\n\"accountingHeadId\": \""+mapAChead(
+        #     oldValue.category)+"\",\r\n\"paymentStatus\": "+oldValue.paymentStatus+",\r\n\"recurring\": " + True if('Yes' in oldValue.recurrence) else False+",\r\n\"status\": \"draft\"\r\n}\r\n},\r\n\"query\": \"mutation CreateExpense($input: ExpenseInput) {\\n  createExpense(input: $input) {\\n    id\\n    referenceId\\n   }\\n}\\n\"\r\n}"
+        payload = {
+            "operationName": "CreateExpense",
+            "variables": {
+                "input": {
+                    "company": "2",
+                    "title": oldValue.Description ,
+                    "description": oldValue.Description,
+                    "amount": oldValue.Amount,
+                    "accountingHeadId": mapAChead(oldValue.category),
+                    "paymentStatus": oldValue.paymentStatus,
+                    "recurring": True if('Yes' in oldValue.recurrence) else False,
+                    "status": "draft"
+                }
+            },
+            "query": "mutation CreateExpense($input: ExpenseInput) {\n  createExpense(input: $input) {\n    id\n    referenceId\n   }\n}\n"
+        }
+        headers = {'Content-Type': 'application/json'}
+        print(payload)
 
         try:
             response = requests.request(

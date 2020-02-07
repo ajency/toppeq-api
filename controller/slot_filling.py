@@ -4,6 +4,7 @@ import sys
 import os
 import json
 import dialogflow_v2
+import requests
 from dialogflow_v2 import types
 
 from google.cloud import language_v1, language
@@ -15,7 +16,7 @@ import dateutil.relativedelta
 from datetime import datetime, date, time, timedelta
 from pprint import pprint
 
-from controller.accounting_head import sendResponse
+from controller.accounting_head import sendResponse, getTags
 import re
 
 slot_fill = Blueprint('slot_fill', __name__)
@@ -43,6 +44,10 @@ class lastEntry():
     fullEntity = 0
     askFor = 'None'
     category = ''
+<<<<<<< HEAD
+    # tags = []
+=======
+>>>>>>> master
 
     def isEmpty(self):
         if self.Amount == '0' and self.Description == '' and self.ExpenseType == '' and self.entitySend == '':
@@ -70,11 +75,12 @@ class lastEntry():
         self.fullEntity = 0
         self.askFor = 'None'
         self.category = ''
+        # self.tags = []
 
     def emptyList(self):
         if self.Amount == '0':
             return 'Amount'
-        if self.paymentDate == '':
+        if self.paymentDate == '' and self.paymentStatus == 'Paid':
             return 'Date'
         if self.entitySend == '':
             return 'Entity'
@@ -132,6 +138,28 @@ def lowerCaps(text):
 def filterResults(text):
     op = removeConsecutiveSpaces(convertWordstoNum(removeStopwords(text)))
     return lowerCaps(op)
+
+
+def mapAChead(acHead):
+    acHead = acHead.replace(' ','_').lower()
+    AcHeadMap = {
+        "office_expenses": 2,
+        "advertising_and_marketing": 3,
+        "employee_benefits": 5,
+        "professional_fees": 6,
+        "professional_fees": 1,
+        "education_and_training": 7,
+        "rent": 8,
+        "travel": 9,
+        "bank_charges": 10,
+        "general_and_administrative_expenses": 11,
+        "it_expense": 12,
+        "cost_of_goods_sold": 13,
+        "others": 15}
+    if (AcHeadMap[acHead]):
+        return AcHeadMap[acHead]
+    else:
+        return 15
 
 
 @slot_fill.route('/slotfill/', methods=['GET', 'POST'])
@@ -294,10 +322,24 @@ def send_response():
                         timedelta(days=(oldValue.paymentDate.day-1))
 
     listTosend = {'inputText':  str(filteredText)}
-    oldValue.category = json.loads(json.dumps(sendResponse(
-        json.loads(json.dumps(listTosend)))))['accountHead']
 
-    result = 'Following is the Output: \n\n'
+    # Get Account Head
+    if(oldValue.category == ''):
+        oldValue.category = json.loads(json.dumps(sendResponse(
+            json.loads(json.dumps(listTosend)))))['accountHead']
+        oldValue.category = oldValue.category.replace('_', " ").title()
+
+    # get Tags
+    # tempList = []
+    # if(oldValue.tags == []):
+        # tempList = json.loads(json.dumps(getTags(
+        # json.loads(json.dumps(listTosend)))))['outflow_tags']
+
+        # oldValue.tags.append(oldValue.category.title())
+        # for string in tempList:
+        # oldValue.tags.append(string.title())
+
+    result = 'Expense recorded as: \n\n'
     if(oldValue.Amount != '0'):
         result += ' Amount : ' + \
             str(oldValue.currency) + ' ' + str(oldValue.Amount) + ' \n  \n'
@@ -318,23 +360,65 @@ def send_response():
         except:
             print('No date yet')
         try:
-            result += ' DueDate : ' + \
+            result += ' Due Date : ' + \
                 oldValue.DueDate.strftime(r"%b %d %Y ") + ' \n  \n'
         except:
             print('No Due Date')
 
+<<<<<<< HEAD
+    result += ' Payment Category : ' + oldValue.category + ' \n  \n'
+    # result += ' Tags : ' + ' '.join(oldValue.tags) + ' \n  \n'
+=======
     result += ' Category : ' + oldValue.category + ' \n  \n'
+>>>>>>> master
 
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()
 
     pprint(vars(oldValue))
     if 'None' in oldValue.emptyList():
+        url = "https://ajency-qa.api.toppeq.com/graphql"
+
+        # payload = "{\r\n\"operationName\": \"CreateExpense\",\r\n\"variables\": {\r\n\"input\": {\r\n\"company\": 2,\r\n\"title\": \" "+oldValue.Description + "\",\r\n\"description\": \"expense\",\r\n\"amount\": "+oldValue.Amount+",\r\n\"accountingHeadId\": "+mapAChead(oldValue.category)+",\r\n\"recurring\": " + "true" if(
+        #     'Yes' in oldValue.recurrence) else "false"+",\r\n\"expenseRecurrence\": {\r\n\"frequency\": \" "+oldValue.frequency+" \"\r\n},\r\n\"status\": \"draft\"\r\n}\r\n},\r\n\"query\": \"mutation CreateExpense($input: ExpenseInput) {\\n createExpense(input: $input) {\\n id\\n referenceId\\n }\\n}\\n\"\r\n}"
+
+        # payload = "{\r\n\"operationName\": \"CreateExpense\",\r\n\"variables\": {\r\n\"input\": {\r\n\"company\": \"2\",\r\n\"title\": "+oldValue.Description + ",\r\n\"description\": \"expense\",\r\n\"amount\": "+oldValue.Amount+",\r\n\"accountingHeadId\": \""+mapAChead(
+        #     oldValue.category)+"\",\r\n\"paymentStatus\": "+oldValue.paymentStatus+",\r\n\"recurring\": " + True if('Yes' in oldValue.recurrence) else False+",\r\n\"status\": \"draft\"\r\n}\r\n},\r\n\"query\": \"mutation CreateExpense($input: ExpenseInput) {\\n  createExpense(input: $input) {\\n    id\\n    referenceId\\n   }\\n}\\n\"\r\n}"
+        payload = {
+            "operationName": "CreateExpense",
+            "variables": {
+                "input": {
+                    "company": "2",
+                    "title": oldValue.Description ,
+                    "description": oldValue.Description,
+                    "amount": oldValue.Amount,
+                    "accountingHeadId": mapAChead(oldValue.category),
+                    "paymentStatus": oldValue.paymentStatus,
+                    "recurring": True if('Yes' in oldValue.recurrence) else False,
+                    "status": "draft"
+                }
+            },
+            "query": "mutation CreateExpense($input: ExpenseInput) {\n  createExpense(input: $input) {\n    id\n    referenceId\n   }\n}\n"
+        }
+        headers = {'Content-Type': 'application/json'}
+        print(payload)
+
+        try:
+            response = requests.request(
+                "POST", url, headers=headers, data=json.dumps(payload))
+            print(response)
+            f = open("demofile2.txt", "a")
+            f.write(str(payload))
+            f.close()
+        except Exception as e:
+            print('API Failed')
+            print(e)
         oldValue.clearIt()
+
     elif 'Amount' in oldValue.emptyList():
         result = 'How much was the amount for the transaction?'
     elif 'Date' in oldValue.emptyList():
-        result = 'When did the transaction Occur? '
+        result = 'What is the date of the transaction? '
     elif 'Entity' in oldValue.emptyList():
         result = 'What was the transaction done for?'
     elif 'Frequency' in oldValue.emptyList():

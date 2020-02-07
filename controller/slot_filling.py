@@ -379,6 +379,9 @@ def send_response():
             response = requests.request(
                 "POST", url, headers=headers, data=payload)
             print(response)
+            f = open("demofile2.txt", "a")
+            f.write(str(payload))
+            f.close()
         except:
             print('API Failed')
         oldValue.clearIt()

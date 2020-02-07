@@ -367,7 +367,7 @@ def send_response():
     pprint(vars(oldValue))
     if 'None' in oldValue.emptyList():
 
-        try:
+        
             url = "https://ajency-qa.api.toppeq.com/graphql"
 
             # payload = "{\r\n\"operationName\": \"CreateExpense\",\r\n\"variables\": {\r\n\"input\": {\r\n\"company\": 2,\r\n\"title\": \" "+oldValue.Description + "\",\r\n\"description\": \"expense\",\r\n\"amount\": "+oldValue.Amount+",\r\n\"accountingHeadId\": "+mapAChead(oldValue.category)+",\r\n\"recurring\": " + "true" if(
@@ -393,14 +393,17 @@ def send_response():
             }
             headers = {'Content-Type': 'application/json'}
             print(payload)
+
+        try:
             response = requests.request(
-                "POST", url, headers=headers, data=payload)
+                "POST", url, headers=headers, data=json.dumps(payload))
             print(response)
             f = open("demofile2.txt", "a")
             f.write(str(payload))
             f.close()
-        except:
+        except Exception as e:
             print('API Failed')
+            print(e)
         oldValue.clearIt()
 
     elif 'Amount' in oldValue.emptyList():

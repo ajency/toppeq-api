@@ -44,7 +44,10 @@ class lastEntry():
     fullEntity = 0
     askFor = 'None'
     category = ''
+<<<<<<< HEAD
     # tags = []
+=======
+>>>>>>> master
 
     def isEmpty(self):
         if self.Amount == '0' and self.Description == '' and self.ExpenseType == '' and self.entitySend == '':
@@ -166,6 +169,9 @@ def send_response():
     inputText = str(req.get('queryResult').get('queryText'))
 
     oldValue.Description = inputText if oldValue.Description == '' else oldValue.Description
+
+    oldValue.category = sendResponse(
+        {'inputText': oldValue.Description})['accountHead'] if oldValue.category == '' else oldValue.category
 
     inputIntent = str(req.get('queryResult').get('intent').get('displayName'))
 
@@ -359,8 +365,12 @@ def send_response():
         except:
             print('No Due Date')
 
+<<<<<<< HEAD
     result += ' Payment Category : ' + oldValue.category + ' \n  \n'
     # result += ' Tags : ' + ' '.join(oldValue.tags) + ' \n  \n'
+=======
+    result += ' Category : ' + oldValue.category + ' \n  \n'
+>>>>>>> master
 
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()

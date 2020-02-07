@@ -76,7 +76,7 @@ class lastEntry():
     def emptyList(self):
         if self.Amount == '0':
             return 'Amount'
-        if self.paymentDate == '':
+        if self.paymentDate == '' and self.paymentStatus == 'Paid':
             return 'Date'
         if self.entitySend == '':
             return 'Entity'
@@ -307,10 +307,10 @@ def send_response():
             #json.loads(json.dumps(listTosend)))))['outflow_tags']
 
         #oldValue.tags.append(oldValue.category.title())
-        f#or string in tempList:
+        #for string in tempList:
             #oldValue.tags.append(string.title()) 
 
-    result = 'Following is the Output: \n\n'
+    result = ': \n\n'
     if(oldValue.Amount != '0'):
         result += ' Amount : ' + \
             str(oldValue.currency) + ' ' + str(oldValue.Amount) + ' \n  \n'
@@ -318,7 +318,7 @@ def send_response():
     result += ' Entities : ' + oldValue.entitySend + ' \n  \n'
     result += ' ExpenseType: ' + oldValue.ExpenseType + ' \n  \n'
     if('Rent' in oldValue.ExpenseType):
-        result += ' recurrence : ' + oldValue.recurrence + ' \n  \n'
+        result += ' Recurrence : ' + oldValue.recurrence + ' \n  \n'
         if('Yes' in oldValue.recurrence):
             result += ' Frequency : ' + oldValue.frequency + ' \n  \n'
 
@@ -326,12 +326,12 @@ def send_response():
 
     if(oldValue.paymentStatus == 'Paid'):
         try:
-            result += ' paymentDate : ' + \
+            result += ' Payment Date : ' + \
                 oldValue.paymentDate.strftime(r"%b %d %Y ") + ' \n  \n'
         except:
             print('No date yet')
         try:
-            result += ' DueDate : ' + \
+            result += ' Due Date : ' + \
                 oldValue.DueDate.strftime(r"%b %d %Y ") + ' \n  \n'
         except:
             print('No Due Date')

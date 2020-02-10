@@ -8,7 +8,8 @@ import dialogflow_v2
 from dialogflow_v2 import types
 from google.cloud import language_v1, language
 from google.cloud.language_v1 import enums, types
-
+from datetime import datetime
+import concurrent
 account_head = Blueprint('account_head', __name__)
 
 
@@ -90,7 +91,7 @@ def getTags(JSONObject):
                     listEntityname.append(intentName)
 
         if(not listEntityname):
-            listEntityname.append('Miscellaneous')
+            listEntityname.append('miscellaneous')
         # remove duplicates
         print(listEntityname)
         listEntityname = list(set(listEntityname))
@@ -101,10 +102,19 @@ def getTags(JSONObject):
 
 @account_head.route('/accounthead/', methods=['GET', 'POST'])
 def add_message():
-    acHead = sendResponse(request.json)
-    tags = getTags(request.json)
-    acHead.update(tags)
-    newList = list(acHead["outflow_tags"])
-    newList.append(acHead["accountHead"])
-    acHead["outflow_tags"] = newList
-    return jsonify(acHead)
+    # Async Process for Accounting Head
+
+    start = datetime.now()
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future = executor.submit(sendResponse, request.json)
+        future1 = executor.submit(getTags, request.json)
+        acHead = future.result()
+        tags = future1.result()
+        acHead.update(tags)
+        newList = list(acHead["outflow_tags"])
+        newList.append(acHead["accountHead"])
+        acHead["outflow_tags"] = newList
+        end = datetime.now()
+        time_taken = end - start
+        print('Time: ', time_taken)
+        return jsonify(acHead)

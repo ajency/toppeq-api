@@ -167,6 +167,9 @@ def send_response():
 
     oldValue.Description = inputText if oldValue.Description == '' else oldValue.Description
 
+    oldValue.category = sendResponse(
+        {'inputText': oldValue.Description})['accountHead'] if oldValue.category == '' else oldValue.category
+
     inputIntent = str(req.get('queryResult').get('intent').get('displayName'))
 
     filteredText = filterResults(inputText)
@@ -361,6 +364,7 @@ def send_response():
 
     result += ' Payment Category : ' + oldValue.category + ' \n  \n'
     # result += ' Tags : ' + ' '.join(oldValue.tags) + ' \n  \n'
+
 
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()

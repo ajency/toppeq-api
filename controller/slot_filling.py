@@ -377,7 +377,9 @@ def send_response():
             print('No Due Date')
 
     result += ' Payment Category : ' + oldValue.category + ' \n  \n'
-    result += ' Tags : ' + ' '.join(oldValue.tags) + ' \n  \n'
+    tagString = ','.join(map(str, oldValue.tags) )
+    tagString = re.sub('_',' ',tagString)
+    result += ' Tags : ' + ' ' +tagString + ' \n  \n'
 
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()

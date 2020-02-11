@@ -166,7 +166,7 @@ def getACHead(text):
     return output.replace('_', " ").title()
 
 
-def getTags(text):
+def receiveTags(text):
     return json.loads(json.dumps(getTags(
         json.loads(json.dumps(text)))))['outflow_tags']
 
@@ -197,7 +197,7 @@ def send_response():
 
         tempList = []
         if(oldValue.tags == []):
-            future1 = executor.submit(getTags, listTosend)
+            future1 = executor.submit(receiveTags, listTosend)
             tempList = future1.result()
             oldValue.tags.append(oldValue.category.title())
             for string in tempList:

@@ -56,6 +56,25 @@ def sendResponse(JSONObject):
         return "Request Failed."
 
 
+def searchTags(inputString):
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../tags.json"
+    client = dialogflow_v2.SessionsClient()
+    session = client.session_path(
+        'slotfilling1-hyalrc', '1234abcdd')
+    text_input = dialogflow_v2.types.TextInput(
+        text=inputString, language_code="en")
+    query_input = dialogflow_v2.types.QueryInput(text=text_input)
+    response = client.detect_intent(
+        session=session, query_input=query_input)
+
+    print('Query text: {}'.format(response.query_result.query_text))
+    print('Detected intent: {} (confidence: {})\n'.format(
+        response.query_result.intent.display_name,
+        response.query_result.intent_detection_confidence))
+    intentName = response.query_result.intent.display_name
+    return intentName
+
+
 def getTags(JSONObject):
     if(JSONObject):
         content = JSONObject
@@ -75,27 +94,17 @@ def getTags(JSONObject):
         response = client1.annotate_text(document, features)
         listEntityname = []
 
-        # from all entities
-        for entity in response.entities:
-            if(enums.Entity.Type(entity.type).name != "PRICE" or enums.Entity.Type(entity.type).name != "DATE"):
-                # call to Dialogflow
-                os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../tags.json"
-                client = dialogflow_v2.SessionsClient()
-                session = client.session_path(
-                    'slotfilling1-hyalrc', '1234abcdd')
-                text_input = dialogflow_v2.types.TextInput(
-                    text=entity.name, language_code="en")
-                query_input = dialogflow_v2.types.QueryInput(text=text_input)
-                response = client.detect_intent(
-                    session=session, query_input=query_input)
-
-                print('Query text: {}'.format(response.query_result.query_text))
-                print('Detected intent: {} (confidence: {})\n'.format(
-                    response.query_result.intent.display_name,
-                    response.query_result.intent_detection_confidence))
-                intentName = response.query_result.intent.display_name
-                if(intentName != 'Default Fallback Intent'):
-                    listEntityname.append(intentName)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future_intent = {executor.submit(searchTags, entity.name): entity for entity in response.entities}
+            for future in concurrent.futures.as_completed(future_intent):
+                output = future_intent[future]
+                try:
+                    intentName = future.result()
+                except Exception as exc:
+                    print('%r generated an exception: %s' % (output, exc))
+                else:
+                    if(intentName != 'Default Fallback Intent'):
+                        listEntityname.append(intentName)
 
         if(not listEntityname):
             listEntityname.append('miscellaneous')

@@ -162,13 +162,13 @@ def mapAChead(acHead):
 
 def getACHead(text):
     output = json.loads(json.dumps(sendResponse(
-        json.loads(json.dumps(listTosend)))))['accountHead']
+        json.loads(json.dumps(text)))))['accountHead']
     return output.replace('_', " ").title()
 
 
 def getTags(text):
     return json.loads(json.dumps(getTags(
-        json.loads(json.dumps(listTosend)))))['outflow_tags']
+        json.loads(json.dumps(text)))))['outflow_tags']
 
 
 @slot_fill.route('/slotfill/', methods=['GET', 'POST'])

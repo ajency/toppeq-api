@@ -17,6 +17,7 @@ from text2digits import text2digits
 from datetime import datetime, date, time, timedelta
 from pprint import pprint
 from controller.accounting_head import sendResponse, getTags
+from datetime import datetime
 
 slot_fill = Blueprint('slot_fill', __name__)
 
@@ -160,19 +161,18 @@ def mapAChead(acHead):
 
 @slot_fill.route('/slotfill/', methods=['GET', 'POST'])
 def send_response():
+
+    start_time = datetime.now()
+
     req = request.get_json(force=True)
-
     inputText = str(req.get('queryResult').get('queryText'))
-
     oldValue.Description = inputText if oldValue.Description == '' else oldValue.Description
-
     oldValue.category = sendResponse(
         {'inputText': oldValue.Description})['accountHead'] if oldValue.category == '' else oldValue.category
-
     inputIntent = str(req.get('queryResult').get('intent').get('displayName'))
 
     filteredText = filterResults(inputText)
-
+    print('Text is Filtered: ', str(datetime.now() - start_time))
     # Step 2: call to Google NL API with the filtered text
 
     document = language.types.Document(
@@ -189,7 +189,7 @@ def send_response():
     response = client1.annotate_text(document, features)
 
     # Price Check
-
+    print('Received NLP Response: ', str(datetime.now() - start_time))
     print('Checking for : '+oldValue.askFor)
 
     # Step 3.1: if price is detected by NLP, mark it with currency
@@ -220,8 +220,9 @@ def send_response():
             if(int(maxValue) > 0):
                 oldValue.Amount = maxValue
                 flag = 1
+    print('Amount is Filtered: ', str(datetime.now() - start_time))
 
-  # Step 3.5 Detect Recurrence
+    # Step 3.5 Detect Recurrence
 
     if(oldValue.ExpenseType == ''):
         if(req.get('queryResult').get('intent').get('displayName') == "checkRentExpense"):
@@ -282,6 +283,7 @@ def send_response():
         except:
             print('Date Error')
 
+    print('Date is Filtered: ', str(datetime.now() - start_time))
     # Checking NLP API for Values
 
     changeVar = 0
@@ -315,12 +317,14 @@ def send_response():
                         timedelta(days=(oldValue.paymentDate.day-1))
 
     listTosend = {'inputText':  str(filteredText)}
+    print('Payment Status is Filtered: ', str(datetime.now() - start_time))
 
     # Get Account Head
     if(oldValue.category == ''):
         oldValue.category = json.loads(json.dumps(sendResponse(
             json.loads(json.dumps(listTosend)))))['accountHead']
         oldValue.category = oldValue.category.replace('_', " ").title()
+    print('Account Head: ', str(datetime.now() - start_time))
 
     # get Tags
     tempList = []
@@ -331,6 +335,7 @@ def send_response():
         oldValue.tags.append(oldValue.category.title())
         for string in tempList:
             oldValue.tags.append(string.title())
+    print('Tags: ', str(datetime.now() - start_time))
 
     result = 'Expense recorded as: \n\n'
     if(oldValue.Amount != '0'):
@@ -363,7 +368,8 @@ def send_response():
 
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()
-
+    print('Output Text is Filtered (Pre query) : ',
+          str(datetime.now() - start_time))
     pprint(vars(oldValue))
     if 'None' in oldValue.emptyList():
         url = "https://ajency-qa.api.toppeq.com/graphql"
@@ -391,6 +397,7 @@ def send_response():
             response = requests.request(
                 "POST", url, headers=headers, data=json.dumps(payload))
             print(response)
+            print('Response Received: ', str(datetime.now() - start_time))
         except Exception as e:
             print('API Failed')
             print(e)
@@ -404,5 +411,5 @@ def send_response():
         result = 'What was the transaction done for?'
     elif 'Frequency' in oldValue.emptyList():
         result = 'How freqently you want the transaction to repeat? \n (Yearly, Monthly, Weekly)'
-
+    print('Sending response: ', str(datetime.now() - start_time))
     return {'fulfillmentText':  result}

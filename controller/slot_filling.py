@@ -170,6 +170,19 @@ def receiveTags(text):
     return json.loads(json.dumps(getTags(
         json.loads(json.dumps(text)))))['outflow_tags']
 
+def callNLP(filteredText):
+    document = language.types.Document(
+        content=filteredText.title(),
+        type=language.enums.Document.Type.PLAIN_TEXT
+    )
+    features = language.types.AnnotateTextRequest.Features(
+        extract_syntax=True,
+        extract_entities=True,
+        extract_document_sentiment=False,
+        extract_entity_sentiment=False,
+        classify_text=False)
+
+    return client1.annotate_text(document, features)
 
 @slot_fill.route('/slotfill/', methods=['GET', 'POST'])
 def send_response():
@@ -202,25 +215,15 @@ def send_response():
             oldValue.tags.append(oldValue.category.title())
             for string in tempList:
                 oldValue.tags.append(string.title())
-        print('Tags: ', str(datetime.now() - start_time))
+            print('Tags: ', str(datetime.now() - start_time))
 
-    # Step 2: call to Google NL API with the filtered text
-
-    document = language.types.Document(
-        content=filteredText.title(),
-        type=language.enums.Document.Type.PLAIN_TEXT
-    )
-    features = language.types.AnnotateTextRequest.Features(
-        extract_syntax=True,
-        extract_entities=True,
-        extract_document_sentiment=False,
-        extract_entity_sentiment=False,
-        classify_text=False)
-
-    response = client1.annotate_text(document, features)
+        # Step 2: call to Google NL API with the filtered text
+        future2 = executor.submit(callNLP, filteredText)
+        response = future2.result()
+        print('Received NLP Response: ', str(datetime.now() - start_time))
 
     # Price Check
-    print('Received NLP Response: ', str(datetime.now() - start_time))
+    
     print('Checking for : '+oldValue.askFor)
 
     # Step 3.1: if price is detected by NLP, mark it with currency

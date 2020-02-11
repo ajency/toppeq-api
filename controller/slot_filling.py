@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 import os
 import json
@@ -8,7 +9,6 @@ import re
 import dateparser
 import dateutil.relativedelta
 
-from __future__ import print_function
 from flask import Flask, request, make_response, jsonify, session, Blueprint
 from dialogflow_v2 import types
 from google.cloud import language_v1, language

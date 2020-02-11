@@ -8,6 +8,7 @@ import time
 import re
 import dateparser
 import dateutil.relativedelta
+import concurrent
 
 from flask import Flask, request, make_response, jsonify, session, Blueprint
 from dialogflow_v2 import types
@@ -159,6 +160,17 @@ def mapAChead(acHead):
         return 15
 
 
+def getACHead(text):
+    output = json.loads(json.dumps(sendResponse(
+        json.loads(json.dumps(listTosend)))))['accountHead']
+    return output.replace('_', " ").title()
+
+
+def getTags(text):
+    return json.loads(json.dumps(getTags(
+        json.loads(json.dumps(listTosend)))))['outflow_tags']
+
+
 @slot_fill.route('/slotfill/', methods=['GET', 'POST'])
 def send_response():
 
@@ -173,6 +185,25 @@ def send_response():
 
     filteredText = filterResults(inputText)
     print('Text is Filtered: ', str(datetime.now() - start_time))
+
+    listTosend = {'inputText':  str(filteredText)}
+    print('Payment Status is Filtered: ', str(datetime.now() - start_time))
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        if(oldValue.category == ''):
+            future = executor.submit(getACHead, listTosend)
+            oldValue.category = future.result()
+            print('Account Head: ', str(datetime.now() - start_time))
+
+        tempList = []
+        if(oldValue.tags == []):
+            future1 = executor.submit(getTags, listTosend)
+            tempList = future1.result()
+            oldValue.tags.append(oldValue.category.title())
+            for string in tempList:
+                oldValue.tags.append(string.title())
+        print('Tags: ', str(datetime.now() - start_time))
+
     # Step 2: call to Google NL API with the filtered text
 
     document = language.types.Document(
@@ -315,27 +346,6 @@ def send_response():
                 if(oldValue.paymentDate != ''):
                     oldValue.DueDate = oldValue.paymentDate - \
                         timedelta(days=(oldValue.paymentDate.day-1))
-
-    listTosend = {'inputText':  str(filteredText)}
-    print('Payment Status is Filtered: ', str(datetime.now() - start_time))
-
-    # Get Account Head
-    if(oldValue.category == ''):
-        oldValue.category = json.loads(json.dumps(sendResponse(
-            json.loads(json.dumps(listTosend)))))['accountHead']
-        oldValue.category = oldValue.category.replace('_', " ").title()
-    print('Account Head: ', str(datetime.now() - start_time))
-
-    # get Tags
-    tempList = []
-    if(oldValue.tags == []):
-        tempList = json.loads(json.dumps(getTags(
-            json.loads(json.dumps(listTosend)))))['outflow_tags']
-
-        oldValue.tags.append(oldValue.category.title())
-        for string in tempList:
-            oldValue.tags.append(string.title())
-    print('Tags: ', str(datetime.now() - start_time))
 
     result = 'Expense recorded as: \n\n'
     if(oldValue.Amount != '0'):

@@ -49,7 +49,7 @@ def sendResponse(JSONObject):
 
         intentName = intentName.lower().replace(" ", "_")
         result = {'inputText': response.query_result.query_text, 'accountHead': intentName,
-                  'confidence': confidence, 'outflow_tags': ["stationery", "office", "supplies"]}
+                  'confidence': confidence, 'outflow_tags': []}
 
         return result
     else:
@@ -130,6 +130,7 @@ def add_message():
         newList = list(acHead["outflow_tags"])
         newList.append(acHead["accountHead"])
         acHead["outflow_tags"] = newList
+        print(str(acHead))
         end = datetime.now()
         time_taken = end - start
         print('Time: ', time_taken)

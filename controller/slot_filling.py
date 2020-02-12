@@ -204,7 +204,8 @@ def callNLP(filteredText):
 
     oldValue.fullEntity = changeVar
 
-    return response 
+    return response
+
 
 @slot_fill.route('/slotfill/', methods=['GET', 'POST'])
 def send_response():
@@ -416,6 +417,10 @@ def send_response():
             response = requests.request(
                 "POST", url, headers=headers, data=json.dumps(payload))
             print(response)
+            OutputURL = 'Ypur Transaction has been recorded. To Check it, Click the link below, \n  https://ajency-qa.toppeq.com/cashflow/outflow/planned#/db_'
+            if(response.json().data.createExpense.id):
+               OutputURL = OutputURL + response.json().data.createExpense.id 
+
             print('Response Received: ', str(datetime.now() - start_time))
         except Exception as e:
             print('API Failed')

@@ -220,6 +220,25 @@ def send_response():
         # Step 2: call to Google NL API with the filtered text
         future2 = executor.submit(callNLP, filteredText)
         response = future2.result()
+            # Checking NLP API for Values
+        changeVar = 0
+        for entity in response.entities:
+            entityDetectList = ["CONSUMER_GOOD", "OTHER", "WORK_OF_ART",
+                                "UNKNOWN", "EVENT", "PERSON", "ORGANIZATION"]
+            # For List of entities
+            if any(x in enums.Entity.Type(entity.type).name for x in entityDetectList):
+                if((entity.name.title() != 'Subscription' or entity.name.title() != 'Rent' or entity.name.title() != 'Purchase')):
+                    if(oldValue.fullEntity == 0 and (oldValue.askFor == 'None' or oldValue.askFor == 'Entity')):
+                        oldValue.entitySend += (entity.name + ', ')
+                        changeVar = 1
+        # For date
+            if ("DATE" in enums.Entity.Type(entity.type).name):
+                oldValue.paymentDate = dateparser.parse(entity.name)
+                if(oldValue.DueDate == "" and oldValue.recurrence == "Yes"):
+                    oldValue.DueDate = oldValue.paymentDate - \
+                        timedelta(days=(oldValue.paymentDate.day-1))
+
+        oldValue.fullEntity = changeVar
         print('Received NLP Response: ', str(datetime.now() - start_time))
 
     # Price Check
@@ -318,27 +337,7 @@ def send_response():
             print('Date Error')
 
     print('Date is Filtered: ', str(datetime.now() - start_time))
-    # Checking NLP API for Values
 
-    changeVar = 0
-    for entity in response.entities:
-        entityDetectList = ["CONSUMER_GOOD", "OTHER", "WORK_OF_ART",
-                            "UNKNOWN", "EVENT", "PERSON", "ORGANIZATION"]
-        # For List of entities
-        if any(x in enums.Entity.Type(entity.type).name for x in entityDetectList):
-            if((entity.name.title() != 'Subscription' or entity.name.title() != 'Rent' or entity.name.title() != 'Purchase')):
-                if(oldValue.fullEntity == 0 and (oldValue.askFor == 'None' or oldValue.askFor == 'Entity')):
-                    oldValue.entitySend += (entity.name + ', ')
-                    changeVar = 1
-
-    # For date
-        if ("DATE" in enums.Entity.Type(entity.type).name):
-            oldValue.paymentDate = dateparser.parse(entity.name)
-            if(oldValue.DueDate == "" and oldValue.recurrence == "Yes"):
-                oldValue.DueDate = oldValue.paymentDate - \
-                    timedelta(days=(oldValue.paymentDate.day-1))
-
-    oldValue.fullEntity = changeVar
 
     # Detect Tense for Paid/Unpaid
     for token in response.tokens:

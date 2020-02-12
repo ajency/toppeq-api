@@ -238,12 +238,12 @@ def send_response():
             oldValue.tags.append(oldValue.category.title())
             for string in tempList:
                 oldValue.tags.append(string.title())
+            print('Tags = ', str(oldValue.tags))
             print('Tags: ', str(datetime.now() - start_time))
 
         # Step 2: call to Google NL API with the filtered text
         future2 = executor.submit(callNLP, filteredText)
         response = future2.result()
-        # Checking NLP API for Values
 
         print('Received NLP Response: ', str(datetime.now() - start_time))
 
@@ -417,10 +417,10 @@ def send_response():
             response = requests.request(
                 "POST", url, headers=headers, data=json.dumps(payload))
             print(response)
-            OutputURL = 'Ypur Transaction has been recorded. To Check it, Click the link below, \n  https://ajency-qa.toppeq.com/cashflow/outflow/planned#/db_'
+            OutputURL = 'Your Transaction has been recorded. To Check it, Click the link below. \n  https://ajency-qa.toppeq.com/cashflow/outflow/planned#/db_'
             outputJSON = response.json()
-            if(outputJSON['data']['createExpense']'[id']):
-                OutputURL = OutputURL + str(outputJSON['data']['createExpense']'[id'])
+            if(outputJSON['data']['createExpense']['id']):
+                OutputURL = OutputURL + str(outputJSON['data']['createExpense']['id'])
                 result= OutputURL
 
             print('Response Received: ', str(datetime.now() - start_time))

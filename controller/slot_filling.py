@@ -419,8 +419,9 @@ def send_response():
             print(response)
             OutputURL = 'Ypur Transaction has been recorded. To Check it, Click the link below, \n  https://ajency-qa.toppeq.com/cashflow/outflow/planned#/db_'
             if(response.json().data.createExpense.id):
-               OutputURL = OutputURL + response.json().data.createExpense.id 
-
+                OutputURL = OutputURL + response.json().data.createExpense.id 
+                result = OutputURL
+                
             print('Response Received: ', str(datetime.now() - start_time))
         except Exception as e:
             print('API Failed')

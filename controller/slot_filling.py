@@ -418,10 +418,11 @@ def send_response():
                 "POST", url, headers=headers, data=json.dumps(payload))
             print(response)
             OutputURL = 'Ypur Transaction has been recorded. To Check it, Click the link below, \n  https://ajency-qa.toppeq.com/cashflow/outflow/planned#/db_'
-            if(response.json().data.createExpense.id):
-                OutputURL = OutputURL + response.json().data.createExpense.id 
-                result = OutputURL
-                
+            outputJSON = response.json()
+            if(outputJSON['data']['createExpense']'[id']):
+                OutputURL = OutputURL + str(outputJSON['data']['createExpense']'[id'])
+                result= OutputURL
+
             print('Response Received: ', str(datetime.now() - start_time))
         except Exception as e:
             print('API Failed')
@@ -429,12 +430,12 @@ def send_response():
         oldValue.clearIt()
 
     elif 'Amount' in oldValue.emptyList():
-        result = 'How much was the amount for the transaction?'
+        result= 'How much was the amount for the transaction?'
     elif 'Date' in oldValue.emptyList():
-        result = 'What is the date of the transaction? '
+        result= 'What is the date of the transaction? '
     elif 'Entity' in oldValue.emptyList():
-        result = 'What was the transaction done for?'
+        result= 'What was the transaction done for?'
     elif 'Frequency' in oldValue.emptyList():
-        result = 'How freqently you want the transaction to repeat? \n (Yearly, Monthly, Weekly)'
+        result= 'How freqently you want the transaction to repeat? \n (Yearly, Monthly, Weekly)'
     print('Sending response: ', str(datetime.now() - start_time))
     return {'fulfillmentText':  result}

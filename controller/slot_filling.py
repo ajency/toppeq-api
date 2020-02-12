@@ -400,6 +400,7 @@ def send_response():
                     "accountingHeadId": mapAChead(oldValue.category),
                     "paymentStatus": oldValue.paymentStatus,
                     "recurring": True if('Yes' in oldValue.recurrence) else False,
+                    "tags" : oldValue.tags,
                     "status": "draft"
                 }
             },

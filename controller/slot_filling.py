@@ -170,6 +170,7 @@ def receiveTags(text):
     return json.loads(json.dumps(getTags(
         json.loads(json.dumps(text)))))['outflow_tags']
 
+
 def callNLP(filteredText):
     document = language.types.Document(
         content=filteredText.title(),
@@ -182,7 +183,28 @@ def callNLP(filteredText):
         extract_entity_sentiment=False,
         classify_text=False)
 
-    return client1.annotate_text(document, features)
+    response = client1.annotate_text(document, features)
+
+    changeVar = 0
+    for entity in response.entities:
+        entityDetectList = ["CONSUMER_GOOD", "OTHER", "WORK_OF_ART",
+                            "UNKNOWN", "EVENT", "PERSON", "ORGANIZATION"]
+        # For List of entities
+        if any(x in enums.Entity.Type(entity.type).name for x in entityDetectList):
+            if((entity.name.title() != 'Subscription' or entity.name.title() != 'Rent' or entity.name.title() != 'Purchase')):
+                if(oldValue.fullEntity == 0 and (oldValue.askFor == 'None' or oldValue.askFor == 'Entity')):
+                    oldValue.entitySend += (entity.name + ', ')
+                    changeVar = 1
+    # For date
+        if ("DATE" in enums.Entity.Type(entity.type).name):
+            oldValue.paymentDate = dateparser.parse(entity.name)
+            if(oldValue.DueDate == "" and oldValue.recurrence == "Yes"):
+                oldValue.DueDate = oldValue.paymentDate - \
+                    timedelta(days=(oldValue.paymentDate.day-1))
+
+    oldValue.fullEntity = changeVar
+
+    return response 
 
 @slot_fill.route('/slotfill/', methods=['GET', 'POST'])
 def send_response():
@@ -220,29 +242,12 @@ def send_response():
         # Step 2: call to Google NL API with the filtered text
         future2 = executor.submit(callNLP, filteredText)
         response = future2.result()
-            # Checking NLP API for Values
-        changeVar = 0
-        for entity in response.entities:
-            entityDetectList = ["CONSUMER_GOOD", "OTHER", "WORK_OF_ART",
-                                "UNKNOWN", "EVENT", "PERSON", "ORGANIZATION"]
-            # For List of entities
-            if any(x in enums.Entity.Type(entity.type).name for x in entityDetectList):
-                if((entity.name.title() != 'Subscription' or entity.name.title() != 'Rent' or entity.name.title() != 'Purchase')):
-                    if(oldValue.fullEntity == 0 and (oldValue.askFor == 'None' or oldValue.askFor == 'Entity')):
-                        oldValue.entitySend += (entity.name + ', ')
-                        changeVar = 1
-        # For date
-            if ("DATE" in enums.Entity.Type(entity.type).name):
-                oldValue.paymentDate = dateparser.parse(entity.name)
-                if(oldValue.DueDate == "" and oldValue.recurrence == "Yes"):
-                    oldValue.DueDate = oldValue.paymentDate - \
-                        timedelta(days=(oldValue.paymentDate.day-1))
+        # Checking NLP API for Values
 
-        oldValue.fullEntity = changeVar
         print('Received NLP Response: ', str(datetime.now() - start_time))
 
     # Price Check
-    
+
     print('Checking for : '+oldValue.askFor)
 
     # Step 3.1: if price is detected by NLP, mark it with currency
@@ -338,7 +343,6 @@ def send_response():
 
     print('Date is Filtered: ', str(datetime.now() - start_time))
 
-
     # Detect Tense for Paid/Unpaid
     for token in response.tokens:
         # 3 = enum for Past
@@ -376,15 +380,15 @@ def send_response():
             print('No Due Date')
 
     result += ' Payment Category : ' + oldValue.category + ' \n  \n'
-    tagString = ','.join(map(str, oldValue.tags) )
-    tagString = re.sub('_',' ',tagString)
-    result += ' Tags : ' + ' ' +tagString + ' \n  \n'
+    tagString = ','.join(map(str, oldValue.tags))
+    tagString = re.sub('_', ' ', tagString)
+    result += ' Tags : ' + ' ' + tagString + ' \n  \n'
 
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()
     print('Output Text is Filtered (Pre query) : ',
           str(datetime.now() - start_time))
-    pprint(vars(oldValue))
+    # pprint(vars(oldValue))
     if 'None' in oldValue.emptyList():
         url = "https://ajency-qa.api.toppeq.com/graphql"
 
@@ -399,7 +403,7 @@ def send_response():
                     "accountingHeadId": mapAChead(oldValue.category),
                     "paymentStatus": oldValue.paymentStatus,
                     "recurring": True if('Yes' in oldValue.recurrence) else False,
-                    "tags" : oldValue.tags,
+                    "tags": oldValue.tags,
                     "status": "draft"
                 }
             },

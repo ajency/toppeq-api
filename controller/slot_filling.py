@@ -144,7 +144,7 @@ def mapAChead(acHead):
         "office_expenses": 2,
         "advertising_and_marketing": 3,
         "employee_benefits": 5,
-        "professional_fees": 6,
+        "professional_fees2": 6,
         "professional_fees": 1,
         "education_and_training": 7,
         "rent": 8,

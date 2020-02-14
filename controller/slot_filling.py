@@ -198,7 +198,7 @@ def callNLP(filteredText):
         # For List of entities
         if any(x in enums.Entity.Type(entity.type).name for x in entityDetectList):
             if((entity.name.title() != 'Subscription' or entity.name.title() != 'Rent' or entity.name.title() != 'Purchase')):
-                if(oldValue.fullEntity == 0 and (oldValue.askFor == 'None' or oldValue.askFor == 'Entity')):
+                if(oldValue.askFor == 'None' or oldValue.askFor == 'Entity'):
                     oldValue.entitySend += (entity.name + ', ')
                     changeVar = 1
     # For date
@@ -392,7 +392,7 @@ def send_response():
     oldValue.askFor = oldValue.emptyList()
     print('Output Text is Filtered (Pre query) : ',
           str(datetime.now() - start_time))
-    # pprint(vars(oldValue))
+    pprint(vars(oldValue))
     if 'None' in oldValue.emptyList():
         url = "https://ajency-qa.api.toppeq.com/graphql"
 

@@ -210,7 +210,45 @@ def callNLP(filteredText):
 
     oldValue.fullEntity = changeVar
 
-    #print('Received NLP Response: ', str(datetime.now() - start_time))
+    return response
+
+
+@slot_fill.route('/slotfill/', methods=['GET', 'POST'])
+def send_response():
+
+    start_time = datetime.now()
+
+    req = request.get_json(force=True)
+    inputText = str(req.get('queryResult').get('queryText'))
+    oldValue.Description = inputText if oldValue.Description == '' else oldValue.Description
+    # oldValue.category = sendResponse(
+    # {'inputText': oldValue.Description})['accountHead'] if oldValue.category == '' else oldValue.category
+    inputIntent = str(req.get('queryResult').get('intent').get('displayName'))
+
+    filteredText = filterResults(inputText)
+    print('Text is Filtered: ', str(datetime.now() - start_time))
+
+    listTosend = {'inputText':  str(filteredText)}
+    print('Payment Status is Filtered: ', str(datetime.now() - start_time))
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        if(oldValue.category == ''):
+            future = executor.submit(getACHead, listTosend)
+            oldValue.category = future.result()
+            print('Account Head: ', str(datetime.now() - start_time))
+
+        tempList = []
+        if(oldValue.tags == []):
+            future1 = executor.submit(receiveTags, listTosend)
+            tempList = future1.result()
+            print('Tags = ', str(oldValue.tags))
+            print('Tags: ', str(datetime.now() - start_time))
+
+        # Step 2: call to Google NL API with the filtered text
+        future2 = executor.submit(callNLP, filteredText)
+        response = future2.result()
+
+        print('Received NLP Response: ', str(datetime.now() - start_time))
 
     # Price Check
 
@@ -244,7 +282,7 @@ def callNLP(filteredText):
             if(int(maxValue) > 0):
                 oldValue.Amount = maxValue
                 flag = 1
-    #print('Amount is Filtered: ', str(datetime.now() - start_time))
+    print('Amount is Filtered: ', str(datetime.now() - start_time))
 
     # Step 3.5 Detect Recurrence
 
@@ -307,7 +345,7 @@ def callNLP(filteredText):
         except:
             print('Date Error')
 
-    #print('Date is Filtered: ', str(datetime.now() - start_time))
+    print('Date is Filtered: ', str(datetime.now() - start_time))
 
     # Detect Tense for Paid/Unpaid
     for token in response.tokens:
@@ -352,8 +390,8 @@ def callNLP(filteredText):
 
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()
-    #print('Output Text is Filtered (Pre query) : ',
-     #     str(datetime.now() - start_time))
+    print('Output Text is Filtered (Pre query) : ',
+          str(datetime.now() - start_time))
     pprint(vars(oldValue))
     if 'None' in oldValue.emptyList():
         url = "https://ajency-qa.api.toppeq.com/graphql"
@@ -390,7 +428,7 @@ def callNLP(filteredText):
                     str(outputJSON['data']['createExpense']['id'])
                 result = OutputURL
 
-            #print('Response Received: ', str(datetime.now() - start_time))
+            print('Response Received: ', str(datetime.now() - start_time))
         except Exception as e:
             print('API Failed')
             print(e)
@@ -404,46 +442,5 @@ def callNLP(filteredText):
         result = 'What was the transaction done for?'
     elif 'Frequency' in oldValue.emptyList():
         result = 'How freqently you want the transaction to repeat? \n (Yearly, Monthly, Weekly)'
-    #print('Sending response: ', str(datetime.now() - start_time))
+    print('Sending response: ', str(datetime.now() - start_time))
     return {'fulfillmentText':  result}
-
-    #return response
-
-
-@slot_fill.route('/slotfill/', methods=['GET', 'POST'])
-def send_response():
-
-    start_time = datetime.now()
-
-    req = request.get_json(force=True)
-    inputText = str(req.get('queryResult').get('queryText'))
-    oldValue.Description = inputText if oldValue.Description == '' else oldValue.Description
-    # oldValue.category = sendResponse(
-    # {'inputText': oldValue.Description})['accountHead'] if oldValue.category == '' else oldValue.category
-    inputIntent = str(req.get('queryResult').get('intent').get('displayName'))
-
-    filteredText = filterResults(inputText)
-    print('Text is Filtered: ', str(datetime.now() - start_time))
-
-    listTosend = {'inputText':  str(filteredText)}
-    print('Payment Status is Filtered: ', str(datetime.now() - start_time))
-
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        if(oldValue.category == ''):
-            future = executor.submit(getACHead, listTosend)
-            oldValue.category = future.result()
-            print('Account Head: ', str(datetime.now() - start_time))
-
-        tempList = []
-        if(oldValue.tags == []):
-            future1 = executor.submit(receiveTags, listTosend)
-            tempList = future1.result()
-            print('Tags = ', str(oldValue.tags))
-            print('Tags: ', str(datetime.now() - start_time))
-
-        # Step 2: call to Google NL API with the filtered text
-        future2 = executor.submit(callNLP, filteredText)
-        response = future2.result()
-
-        return response
-        

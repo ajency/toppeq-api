@@ -167,8 +167,14 @@ def getACHead(text):
 
 
 def receiveTags(text):
-    return json.loads(json.dumps(getTags(
+    tempList = []
+    if(oldValue.tags == []):
+        tempList = json.loads(json.dumps(getTags(
         json.loads(json.dumps(text)))))['outflow_tags']
+        oldValue.tags.append(oldValue.category.title())
+        for string in tempList:
+            oldValue.tags.append(string.title())
+    return ''
 
 
 def callNLP(filteredText):
@@ -215,8 +221,8 @@ def send_response():
     req = request.get_json(force=True)
     inputText = str(req.get('queryResult').get('queryText'))
     oldValue.Description = inputText if oldValue.Description == '' else oldValue.Description
-    #oldValue.category = sendResponse(
-        #{'inputText': oldValue.Description})['accountHead'] if oldValue.category == '' else oldValue.category
+    # oldValue.category = sendResponse(
+    # {'inputText': oldValue.Description})['accountHead'] if oldValue.category == '' else oldValue.category
     inputIntent = str(req.get('queryResult').get('intent').get('displayName'))
 
     filteredText = filterResults(inputText)
@@ -235,9 +241,6 @@ def send_response():
         if(oldValue.tags == []):
             future1 = executor.submit(receiveTags, listTosend)
             tempList = future1.result()
-            oldValue.tags.append(oldValue.category.title())
-            for string in tempList:
-                oldValue.tags.append(string.title())
             print('Tags = ', str(oldValue.tags))
             print('Tags: ', str(datetime.now() - start_time))
 
@@ -401,7 +404,7 @@ def send_response():
                     "title": oldValue.Description,
                     "description": oldValue.Description,
                     "amount": oldValue.Amount,
-                    #"accountingHeadId": mapAChead(oldValue.category),
+                    # "accountingHeadId": mapAChead(oldValue.category),
                     "paymentStatus": oldValue.paymentStatus,
                     "recurring": True if('Yes' in oldValue.recurrence) else False,
                     "tags": oldValue.tags,
@@ -419,10 +422,11 @@ def send_response():
             print(response)
             OutputURL = 'Your Transaction has been recorded. To Check it, Click the link below. \n  https://ajency-qa.toppeq.com/cashflow/outflow/planned#/db_'
             outputJSON = response.json()
-            print('JSON = ',str(outputJSON))
+            print('JSON = ', str(outputJSON))
             if(outputJSON['data']['createExpense']['id']):
-                OutputURL = OutputURL + str(outputJSON['data']['createExpense']['id'])
-                result= OutputURL
+                OutputURL = OutputURL + \
+                    str(outputJSON['data']['createExpense']['id'])
+                result = OutputURL
 
             print('Response Received: ', str(datetime.now() - start_time))
         except Exception as e:
@@ -431,12 +435,12 @@ def send_response():
         oldValue.clearIt()
 
     elif 'Amount' in oldValue.emptyList():
-        result= 'How much was the amount for the transaction?'
+        result = 'How much was the amount for the transaction?'
     elif 'Date' in oldValue.emptyList():
-        result= 'What is the date of the transaction? '
+        result = 'What is the date of the transaction? '
     elif 'Entity' in oldValue.emptyList():
-        result= 'What was the transaction done for?'
+        result = 'What was the transaction done for?'
     elif 'Frequency' in oldValue.emptyList():
-        result= 'How freqently you want the transaction to repeat? \n (Yearly, Monthly, Weekly)'
+        result = 'How freqently you want the transaction to repeat? \n (Yearly, Monthly, Weekly)'
     print('Sending response: ', str(datetime.now() - start_time))
     return {'fulfillmentText':  result}

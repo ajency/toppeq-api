@@ -210,7 +210,7 @@ def callNLP(filteredText):
 
     oldValue.fullEntity = changeVar
 
-    print('Received NLP Response: ', str(datetime.now() - start_time))
+    #print('Received NLP Response: ', str(datetime.now() - start_time))
 
     # Price Check
 
@@ -244,7 +244,7 @@ def callNLP(filteredText):
             if(int(maxValue) > 0):
                 oldValue.Amount = maxValue
                 flag = 1
-    print('Amount is Filtered: ', str(datetime.now() - start_time))
+    #print('Amount is Filtered: ', str(datetime.now() - start_time))
 
     # Step 3.5 Detect Recurrence
 
@@ -307,7 +307,7 @@ def callNLP(filteredText):
         except:
             print('Date Error')
 
-    print('Date is Filtered: ', str(datetime.now() - start_time))
+    #print('Date is Filtered: ', str(datetime.now() - start_time))
 
     # Detect Tense for Paid/Unpaid
     for token in response.tokens:
@@ -352,8 +352,8 @@ def callNLP(filteredText):
 
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()
-    print('Output Text is Filtered (Pre query) : ',
-          str(datetime.now() - start_time))
+    #print('Output Text is Filtered (Pre query) : ',
+     #     str(datetime.now() - start_time))
     pprint(vars(oldValue))
     if 'None' in oldValue.emptyList():
         url = "https://ajency-qa.api.toppeq.com/graphql"
@@ -390,7 +390,7 @@ def callNLP(filteredText):
                     str(outputJSON['data']['createExpense']['id'])
                 result = OutputURL
 
-            print('Response Received: ', str(datetime.now() - start_time))
+            #print('Response Received: ', str(datetime.now() - start_time))
         except Exception as e:
             print('API Failed')
             print(e)
@@ -404,7 +404,7 @@ def callNLP(filteredText):
         result = 'What was the transaction done for?'
     elif 'Frequency' in oldValue.emptyList():
         result = 'How freqently you want the transaction to repeat? \n (Yearly, Monthly, Weekly)'
-    print('Sending response: ', str(datetime.now() - start_time))
+    #print('Sending response: ', str(datetime.now() - start_time))
     return {'fulfillmentText':  result}
 
     #return response

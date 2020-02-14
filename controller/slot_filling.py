@@ -215,8 +215,8 @@ def send_response():
     req = request.get_json(force=True)
     inputText = str(req.get('queryResult').get('queryText'))
     oldValue.Description = inputText if oldValue.Description == '' else oldValue.Description
-    oldValue.category = sendResponse(
-        {'inputText': oldValue.Description})['accountHead'] if oldValue.category == '' else oldValue.category
+    #oldValue.category = sendResponse(
+        #{'inputText': oldValue.Description})['accountHead'] if oldValue.category == '' else oldValue.category
     inputIntent = str(req.get('queryResult').get('intent').get('displayName'))
 
     filteredText = filterResults(inputText)
@@ -401,7 +401,7 @@ def send_response():
                     "title": oldValue.Description,
                     "description": oldValue.Description,
                     "amount": oldValue.Amount,
-                    "accountingHeadId": mapAChead(oldValue.category),
+                    #"accountingHeadId": mapAChead(oldValue.category),
                     "paymentStatus": oldValue.paymentStatus,
                     "recurring": True if('Yes' in oldValue.recurrence) else False,
                     "tags": oldValue.tags,
@@ -419,6 +419,7 @@ def send_response():
             print(response)
             OutputURL = 'Your Transaction has been recorded. To Check it, Click the link below. \n  https://ajency-qa.toppeq.com/cashflow/outflow/planned#/db_'
             outputJSON = response.json()
+            print('JSON = ',str(outputJSON))
             if(outputJSON['data']['createExpense']['id']):
                 OutputURL = OutputURL + str(outputJSON['data']['createExpense']['id'])
                 result= OutputURL

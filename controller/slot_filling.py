@@ -438,8 +438,8 @@ def send_response():
         result = 'How much was the amount for the transaction?'
     elif 'Date' in oldValue.emptyList():
         result = 'What is the date of the transaction? '
-    elif 'Entity' in oldValue.emptyList():
-        result = 'What was the transaction done for?'
+    #elif 'Entity' in oldValue.emptyList():
+        #result = 'What was the transaction done for?'
     elif 'Frequency' in oldValue.emptyList():
         result = 'How freqently you want the transaction to repeat? \n (Yearly, Monthly, Weekly)'
     print('Sending response: ', str(datetime.now() - start_time))

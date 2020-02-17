@@ -31,7 +31,7 @@ def help_text():
     message = client.messages \
         .create(
             from_=request.values.get('To', None),
-            body="*To record an expense*, simply try typing in like this \n \n \"_Bought office stationery for $20K_.\" ",
+            body="*To record an expense*, simply try typing in like this \n \n _ \"Bought office stationery for $20K.\" _ ",
             to=request.values.get('From', None)
         )
 
@@ -39,13 +39,13 @@ def help_text():
     message = client.messages \
         .create(
             from_=request.values.get('To', None),
-            body="In case you want to *notify additional users*,  you can do so by adding something like _@john @email_id_ \n Ex. \"_Bought office stationery for $20K. @john @mike\"_ ",
+            body="In case you want to *notify additional users*,  you can do so by adding something like _@john @email_id_ \n Ex.  _\"Bought office stationery for $20K. @john @mike\" _ ",
             to=request.values.get('From', None)
         )
     message = client.messages \
         .create(
             from_=request.values.get('To', None),
-            body="Tip: :bulb: Type _\"new\"_ or _\"reset\"_, anytime if you want to start adding a fresh expense. To learn more about adding an expense, simply type _\"help\" _ ",
+            body="Tip: :bulb: Type _\"new\"_ or _\"reset\"_, anytime if you want to start adding a fresh expense. To learn more about adding an expense, simply type _ \"help\"  _",
             to=request.values.get('From', None)
         )
 
@@ -82,7 +82,7 @@ def incoming_sms():
     print(str(resp))
     if(response.query_result.fulfillment_text == 'Cleared'):
         resp = ''
-        if(incoming_text.lower() == "new" or body.lower() == "hi" or body.lower() == "hello"):
+        if(incoming_text.lower() == "new" or incoming_text.lower() == "hi" or incoming_text.lower() == "hello"):
             new_text()
         help_text()
     return resp

@@ -12,7 +12,7 @@ from google.cloud.language_v1 import enums, types
 from google.oauth2.service_account import Credentials
 
 account_sid = 'AC797feaab84bdd385bbb2ae0f1c08e8b6'
-auth_token = 
+auth_token = os.environ['TWILIOAPIKEY']
 
 whatsapp_call = Blueprint('whatsapp', __name__)
 

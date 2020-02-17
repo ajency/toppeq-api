@@ -21,7 +21,7 @@ def new_text():
     message = client.messages \
         .create(
             from_=request.values.get('To', None),
-            body="Hi there 👋 U+1F601 My name's Expense buddy and I'm here to assist you with recording expenses.  ",
+            body="Hi there 👋 My name's Expense buddy and I'm here to assist you with recording expenses.  ",
             to=request.values.get('From', None)
         )
 
@@ -57,7 +57,7 @@ def incoming_sms():
     print(vars(request.values))
     body = request.values.get('Body', None)
     incoming_text = body
-    if(body.lower() == "new" or body.lower() == "reset" or body.lower() == "help"):
+    if(body.lower() == "new" or body.lower() == "reset" or body.lower() == "help" or body.lower() == "hi" or body.lower() == "hello" ):
         body = 'reset vars'
 
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../expenseslot.json"
@@ -82,7 +82,7 @@ def incoming_sms():
     print(str(resp))
     if(response.query_result.fulfillment_text == 'Cleared'):
         resp = ''
-        if(incoming_text.lower() == "new"):
+        if(incoming_text.lower() == "new" or body.lower() == "hi" or body.lower() == "hello"):
             new_text()
         help_text()
     return resp

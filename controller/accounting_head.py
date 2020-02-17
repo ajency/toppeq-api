@@ -78,6 +78,7 @@ def searchTags(inputString):
 def getTags(JSONObject):
     if(JSONObject):
         content = JSONObject
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../tags.json"
         # Call NLP API
         client1 = language_v1.LanguageServiceClient()
         document = language.types.Document(

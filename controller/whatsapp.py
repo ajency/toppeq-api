@@ -21,7 +21,7 @@ def incoming_sms():
     print(vars(request.values))
     body = request.values.get('Body', None)
 
-    if(body.lower() == "new" || body.lower() == "reset" || body.lower() == "help" ):
+    if(body.lower() == "new" | | body.lower() == "reset" | | body.lower() == "help"):
         account_sid = 'AC797feaab84bdd385bbb2ae0f1c08e8b6'
         auth_token = '4835d9b49f5dbdd284d5ab2d251918'
         client = Client(account_sid, auth_token)
@@ -30,7 +30,7 @@ def incoming_sms():
             .create(
                 from_=request.values.get('To', None),
                 body="To record an expense, simply try typing in like this \n \n \"Bought office stationery for $20K.\" ",
-                to= request.values.get('From', None)
+                to=request.values.get('From', None)
             )
 
         print(message.sid)
@@ -38,13 +38,13 @@ def incoming_sms():
             .create(
                 from_=request.values.get('To', None),
                 body="In case you want to notify additional users,  you can do so by adding something like @john @email_id \n Ex. \"Bought office stationery for $20K. @john @mike\" ",
-                to= request.values.get('From', None)
+                to=request.values.get('From', None)
             )
         message = client.messages \
             .create(
                 from_=request.values.get('To', None),
                 body="Tip: :bulb: Type \"new\" or \"reset\", anytime if you want to start adding a fresh expense. To learn more about adding an expense, simply type \"help\"  ",
-                to= request.values.get('From', None)
+                to=request.values.get('From', None)
             )
         return ''
 

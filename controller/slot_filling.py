@@ -182,7 +182,7 @@ def send_nlp_response():
     req = request.get_json(force=True)
 
     inputText = str(req.get('queryResult').get('queryText'))
-    
+
     oldValue.Description = inputText if oldValue.Description == '' else oldValue.Description
 
     inputIntent = str(req.get('queryResult').get('intent').get('displayName'))
@@ -227,53 +227,42 @@ def send_nlp_response():
     print('Checking for : '+oldValue.askFor)
 
       # Step 3.1: if price is detected by NLP, mark it with currency
-      flag = 0 if(oldValue.Amount == '0') else 1
+    flag = 0 if(oldValue.Amount == '0') else 1
 
-       if(oldValue.Amount == '0'):
+    if(oldValue.Amount == '0'):
+        for entity in response.entities:
+            if(enums.Entity.Type(entity.type).name == "PRICE" and flag == 0):
+                oldValue.Amount = float(entity.metadata[u"value"])
+                oldValue.currency = entity.metadata[u"currency"]
+                flag = 1
+
+        # Step 3.3 Check from Dialogflow
+        if(flag == 0):
+            if(req.get('queryResult').get('parameters').get('PRICE')):
+                oldValue.Amount = float(
+                    req.get('queryResult').get('parameters').get('PRICE'))
+                flag = 1
+
+        # Step 3.4 In case nothing is found, pick a number from the list
+        if(flag == 0):
+            maxValue = 0
             for entity in response.entities:
-                if(enums.Entity.Type(entity.type).name == "PRICE" and flag == 0):
-                    oldValue.Amount = float(entity.metadata[u"value"])
-                    oldValue.currency = entity.metadata[u"currency"]
-                    flag = 1
+                if(enums.Entity.Type(entity.type).name == "NUMBER"):
+                    maxValue = float(entity.metadata[u"value"]) if(
+                        int(float(entity.metadata[u"value"])) > int(float(maxValue))) else maxValue
 
-            # Step 3.3 Check from Dialogflow
-            if(flag == 0):
-                if(req.get('queryResult').get('parameters').get('PRICE')):
-                    oldValue.Amount = float(
-                        req.get('queryResult').get('parameters').get('PRICE'))
-                    flag = 1
+            if(int(maxValue) > 0):
+                oldValue.Amount = maxValue
+                flag = 1
+    print('Amount is Filtered: ', str(datetime.now() - start_time))
 
-            # Step 3.4 In case nothing is found, pick a number from the list
-            if(flag == 0):
-                maxValue = 0
-                for entity in response.entities:
-                    if(enums.Entity.Type(entity.type).name == "NUMBER"):
-                        maxValue = float(entity.metadata[u"value"]) if(
-                            int(float(entity.metadata[u"value"])) > int(float(maxValue))) else maxValue
+    # Step 3.5 Detect Recurrence
 
-                if(int(maxValue) > 0):
-                    oldValue.Amount = maxValue
-                    flag = 1
-        print('Amount is Filtered: ', str(datetime.now() - start_time))
+    if(oldValue.ExpenseType == ''):
+        if(req.get('queryResult').get('intent').get('displayName') == "checkRentExpense"):
+            oldValue.recurrence = "Yes"
+            oldValue.ExpenseType = "Rent/Subscription"
 
-        # Step 3.5 Detect Recurrence
-
-        if(oldValue.ExpenseType == ''):
-            if(req.get('queryResult').get('intent').get('displayName') == "checkRentExpense"):
-                oldValue.recurrence = "Yes"
-                oldValue.ExpenseType = "Rent/Subscription"
-
-                textString = filteredText.lower()
-                if("weekly" in textString or "per week" in textString):
-                    oldValue.frequency = "Weekly"
-                elif("yearly" in textString or "per year" in textString or "annual" in textString):
-                    oldValue.frequency = "Yearly"
-                elif("monthly" in textString or "per month" in textString or "every month" in textString):
-                    oldValue.frequency = "Monthly"
-            else:
-                oldValue.ExpenseType = "Buy/Purchase"
-
-        elif(oldValue.askFor == 'Frequency'):
             textString = filteredText.lower()
             if("weekly" in textString or "per week" in textString):
                 oldValue.frequency = "Weekly"
@@ -281,136 +270,147 @@ def send_nlp_response():
                 oldValue.frequency = "Yearly"
             elif("monthly" in textString or "per month" in textString or "every month" in textString):
                 oldValue.frequency = "Monthly"
+        else:
+            oldValue.ExpenseType = "Buy/Purchase"
 
-        # Check if Dialogflow had picked up a date (18th, last wednesday)
-        if(oldValue.askFor == 'Date'):
-            oldValue.paymentDate = dateparser.parse(str(filteredText))
-            if(oldValue.paymentDate == None):
-                print('failed to parse data')
-                oldValue.paymentDate = ''
+    elif(oldValue.askFor == 'Frequency'):
+        textString = filteredText.lower()
+        if("weekly" in textString or "per week" in textString):
+            oldValue.frequency = "Weekly"
+        elif("yearly" in textString or "per year" in textString or "annual" in textString):
+            oldValue.frequency = "Yearly"
+        elif("monthly" in textString or "per month" in textString or "every month" in textString):
+            oldValue.frequency = "Monthly"
 
-        if(oldValue.paymentDate == ''):
-            if(req.get('queryResult').get('parameters').get('date')):
-                oldValue.paymentDate = dateparser.parse(
-                    str(req.get('queryResult').get('parameters').get('date')))
+    # Check if Dialogflow had picked up a date (18th, last wednesday)
+    if(oldValue.askFor == 'Date'):
+        oldValue.paymentDate = dateparser.parse(str(filteredText))
+        if(oldValue.paymentDate == None):
+            print('failed to parse data')
+            oldValue.paymentDate = ''
+
+    if(oldValue.paymentDate == ''):
+        if(req.get('queryResult').get('parameters').get('date')):
+            oldValue.paymentDate = dateparser.parse(
+                str(req.get('queryResult').get('parameters').get('date')))
+            if(oldValue.recurrence == "Yes"):
+                oldValue.DueDate = oldValue.paymentDate - \
+                    timedelta(days=(oldValue.paymentDate.day-1))
+
+            if(str(int(float(oldValue.Amount))) in str(req.get('queryResult').get('parameters').get('date'))):
+                oldValue.Amount = '0'
+
+        # Check if Dialogflow had picked up a date (this month, next june, last year)
+        try:
+            if(req.get('queryResult').get('parameters').get('date-period') != ''):
+                if(req.get('queryResult').get('parameters').get('date-period').get('endDate')):
+                    oldValue.paymentDate = dateparser.parse(
+                        req.get('queryResult').get('parameters').get('date-period').get('endDate'))
                 if(oldValue.recurrence == "Yes"):
                     oldValue.DueDate = oldValue.paymentDate - \
                         timedelta(days=(oldValue.paymentDate.day-1))
 
+                # If the number caught by amount is in date, negate that.
                 if(str(int(float(oldValue.Amount))) in str(req.get('queryResult').get('parameters').get('date'))):
                     oldValue.Amount = '0'
 
-            # Check if Dialogflow had picked up a date (this month, next june, last year)
-            try:
-                if(req.get('queryResult').get('parameters').get('date-period') != ''):
-                    if(req.get('queryResult').get('parameters').get('date-period').get('endDate')):
-                        oldValue.paymentDate = dateparser.parse(
-                            req.get('queryResult').get('parameters').get('date-period').get('endDate'))
-                    if(oldValue.recurrence == "Yes"):
-                        oldValue.DueDate = oldValue.paymentDate - \
-                            timedelta(days=(oldValue.paymentDate.day-1))
+        except:
+            print('Date Error')
 
-                    # If the number caught by amount is in date, negate that.
-                    if(str(int(float(oldValue.Amount))) in str(req.get('queryResult').get('parameters').get('date'))):
-                        oldValue.Amount = '0'
+    print('Date is Filtered: ', str(datetime.now() - start_time))
 
-            except:
-                print('Date Error')
+    # Detect Tense for Paid/Unpaid
+    for token in response.tokens:
+        # 3 = enum for Past
+        if(token.part_of_speech.tense == 3):
+            oldValue.paymentStatus = "Paid"
+            if(oldValue.ExpenseType == "Rent/Subscription"):
+                if(oldValue.paymentDate != ''):
+                    oldValue.DueDate = oldValue.paymentDate - \
+                        timedelta(days=(oldValue.paymentDate.day-1))
 
-        print('Date is Filtered: ', str(datetime.now() - start_time))
+    result = 'Expense recorded as: \n\n'
+    if(oldValue.Amount != '0'):
+        result += ' Amount : ' + \
+            str(oldValue.currency) + ' ' + str(oldValue.Amount) + ' \n  \n'
 
-        # Detect Tense for Paid/Unpaid
-        for token in response.tokens:
-            # 3 = enum for Past
-            if(token.part_of_speech.tense == 3):
-                oldValue.paymentStatus = "Paid"
-                if(oldValue.ExpenseType == "Rent/Subscription"):
-                    if(oldValue.paymentDate != ''):
-                        oldValue.DueDate = oldValue.paymentDate - \
-                            timedelta(days=(oldValue.paymentDate.day-1))
+    result += ' Entities : ' + oldValue.entitySend + ' \n  \n'
+    result += ' ExpenseType: ' + oldValue.ExpenseType + ' \n  \n'
+    if('Rent' in oldValue.ExpenseType):
+        result += ' Recurrence : ' + oldValue.recurrence + ' \n  \n'
+        if('Yes' in oldValue.recurrence):
+            result += ' Frequency : ' + oldValue.frequency + ' \n  \n'
 
-        result = 'Expense recorded as: \n\n'
-        if(oldValue.Amount != '0'):
-            result += ' Amount : ' + \
-                str(oldValue.currency) + ' ' + str(oldValue.Amount) + ' \n  \n'
+    result += ' Payment Status : ' + oldValue.paymentStatus + ' \n  \n'
 
-        result += ' Entities : ' + oldValue.entitySend + ' \n  \n'
-        result += ' ExpenseType: ' + oldValue.ExpenseType + ' \n  \n'
-        if('Rent' in oldValue.ExpenseType):
-            result += ' Recurrence : ' + oldValue.recurrence + ' \n  \n'
-            if('Yes' in oldValue.recurrence):
-                result += ' Frequency : ' + oldValue.frequency + ' \n  \n'
+    if(oldValue.paymentStatus == 'Paid'):
+        try:
+            result += ' Payment Date : ' + \
+                oldValue.paymentDate.strftime(r"%b %d %Y ") + ' \n  \n'
+        except:
+            print('No date yet')
+        try:
+            result += ' Due Date : ' + \
+                oldValue.DueDate.strftime(r"%b %d %Y ") + ' \n  \n'
+        except:
+            print('No Due Date')
 
-        result += ' Payment Status : ' + oldValue.paymentStatus + ' \n  \n'
+    result += ' Payment Category : ' + oldValue.category + ' \n  \n'
+    tagString = ','.join(map(str, oldValue.tags))
+    tagString = re.sub('_', ' ', tagString)
+    result += ' Tags : ' + ' ' + tagString.lower() + ' \n  \n'
 
-        if(oldValue.paymentStatus == 'Paid'):
-            try:
-                result += ' Payment Date : ' + \
-                    oldValue.paymentDate.strftime(r"%b %d %Y ") + ' \n  \n'
-            except:
-                print('No date yet')
-            try:
-                result += ' Due Date : ' + \
-                    oldValue.DueDate.strftime(r"%b %d %Y ") + ' \n  \n'
-            except:
-                print('No Due Date')
+    print('Missing Value = ' + oldValue.emptyList())
+    oldValue.askFor = oldValue.emptyList()
+    print('Output Text is Filtered (Pre query) : ',
+            str(datetime.now() - start_time))
+    pprint(vars(oldValue))
+    if 'None' in oldValue.emptyList():
+        url = "https://ajency-qa.api.toppeq.com/graphql"
 
-        result += ' Payment Category : ' + oldValue.category + ' \n  \n'
-        tagString = ','.join(map(str, oldValue.tags))
-        tagString = re.sub('_', ' ', tagString)
-        result += ' Tags : ' + ' ' + tagString.lower() + ' \n  \n'
+        payload = {
+            "operationName": "CreateExpense",
+            "variables": {
+                "input": {
+                    "company": "2",
+                    "title": oldValue.Description,
+                    "description": oldValue.Description,
+                    "amount": oldValue.Amount,
+                    "paymentStatus": oldValue.paymentStatus,
+                    "recurring": True if('Yes' in oldValue.recurrence) else False,
+                    "status": "draft"
+                }
+            },
+            "query": "mutation CreateExpense($input: ExpenseInput) {\n  createExpense(input: $input) {\n    id\n    referenceId\n   }\n}\n"
+        }
+        headers = {'Content-Type': 'application/json'}
+        print(payload)
 
-        print('Missing Value = ' + oldValue.emptyList())
-        oldValue.askFor = oldValue.emptyList()
-        print('Output Text is Filtered (Pre query) : ',
-              str(datetime.now() - start_time))
-        pprint(vars(oldValue))
-        if 'None' in oldValue.emptyList():
-            url = "https://ajency-qa.api.toppeq.com/graphql"
+        try:
+            response = requests.request(
+                "POST", url, headers=headers, data=json.dumps(payload))
+            print(response)
+            OutputURL = 'Your Transaction has been recorded. To Check it, Click the link below. \n  https://ajency-qa.toppeq.com/cashflow/outflow/planned#/db_'
+            outputJSON = response.json()
+            print('JSON = ', str(outputJSON))
+            if(outputJSON['data']['createExpense']['id']):
+                OutputURL = OutputURL + \
+                    str(outputJSON['data']['createExpense']['id'])
+                result = OutputURL
 
-            payload = {
-                "operationName": "CreateExpense",
-                "variables": {
-                    "input": {
-                        "company": "2",
-                        "title": oldValue.Description,
-                        "description": oldValue.Description,
-                        "amount": oldValue.Amount,
-                        "paymentStatus": oldValue.paymentStatus,
-                        "recurring": True if('Yes' in oldValue.recurrence) else False,
-                        "status": "draft"
-                    }
-                },
-                "query": "mutation CreateExpense($input: ExpenseInput) {\n  createExpense(input: $input) {\n    id\n    referenceId\n   }\n}\n"
-            }
-            headers = {'Content-Type': 'application/json'}
-            print(payload)
+            print('Response Received: ', str(datetime.now() - start_time))
+        except Exception as e:
+            print('API Failed')
+            print(e)
+        oldValue.clearIt()
 
-            try:
-                response = requests.request(
-                    "POST", url, headers=headers, data=json.dumps(payload))
-                print(response)
-                OutputURL = 'Your Transaction has been recorded. To Check it, Click the link below. \n  https://ajency-qa.toppeq.com/cashflow/outflow/planned#/db_'
-                outputJSON = response.json()
-                print('JSON = ', str(outputJSON))
-                if(outputJSON['data']['createExpense']['id']):
-                    OutputURL = OutputURL + \
-                        str(outputJSON['data']['createExpense']['id'])
-                    result = OutputURL
-
-                print('Response Received: ', str(datetime.now() - start_time))
-            except Exception as e:
-                print('API Failed')
-                print(e)
-            oldValue.clearIt()
-
-        elif 'Amount' in oldValue.emptyList():
-            result = 'How much was the amount for the transaction?'
-        elif 'Date' in oldValue.emptyList():
-            result = 'What is the date of the transaction? '
-        # elif 'Entity' in oldValue.emptyList():
-            #result = 'What was the transaction done for?'
-        elif 'Frequency' in oldValue.emptyList():
-            result = 'How freqently you want the transaction to repeat? \n (Yearly, Monthly, Weekly)'
-        print('Sending response: ', str(datetime.now() - start_time))
-        return {'fulfillmentText':  result}
+    elif 'Amount' in oldValue.emptyList():
+        result = 'How much was the amount for the transaction?'
+    elif 'Date' in oldValue.emptyList():
+        result = 'What is the date of the transaction? '
+    # elif 'Entity' in oldValue.emptyList():
+        #result = 'What was the transaction done for?'
+    elif 'Frequency' in oldValue.emptyList():
+        result = 'How freqently you want the transaction to repeat? \n (Yearly, Monthly, Weekly)'
+    print('Sending response: ', str(datetime.now() - start_time))
+    return {'fulfillmentText':  result}

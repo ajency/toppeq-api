@@ -21,7 +21,7 @@ def new_text():
     message = client.messages \
         .create(
             from_=request.values.get('To', None),
-            body="Hi there U+1F601 My name's Expense buddy and I'm here to assist you with recording expenses.  ",
+            body="Hi there 👋 U+1F601 My name's Expense buddy and I'm here to assist you with recording expenses.  ",
             to=request.values.get('From', None)
         )
 
@@ -80,10 +80,12 @@ def incoming_sms():
     # Determine the right reply for this message
     resp.message(response.query_result.fulfillment_text)
     print(str(resp))
-    if(resp == 'Cleared'):
+    if(response.query_result.fulfillment_text == 'Cleared'):
         resp = ''
+        if(body.lower() == "new"):
+            new_text()
         help_text()
-    return str(resp)
+    return resp
 
 
 @whatsapp_call.route("/status", methods=['GET', 'POST'])

@@ -12,7 +12,7 @@ from google.cloud.language_v1 import enums, types
 from google.oauth2.service_account import Credentials
 
 account_sid = 'AC797feaab84bdd385bbb2ae0f1c08e8b6'
-auth_token = 'b4835d9b49f5dbdd284d5ab2d2519189'
+auth_token = 
 
 whatsapp_call = Blueprint('whatsapp', __name__)
 
@@ -24,6 +24,7 @@ def new_text():
             body="Hi there 👋 My name's Expense buddy and I'm here to assist you with recording expenses.  ",
             to=request.values.get('From', None)
         )
+    time.sleep(1)
 
 
 def help_text():
@@ -31,17 +32,20 @@ def help_text():
     message = client.messages \
         .create(
             from_=request.values.get('To', None),
-            body="*To record an expense*, simply try typing in like this \n \n _ \"Bought office stationery for $20K.\" _ ",
+            body="*To record an expense*, simply try typing in like this \n \n _\"Bought office stationery for $20K.\"_ ",
             to=request.values.get('From', None)
         )
+    time.sleep(1)
 
     print(message.sid)
     message = client.messages \
         .create(
             from_=request.values.get('To', None),
-            body="In case you want to *notify additional users*,  you can do so by adding something like _@john @email_id_ \n Ex.  _\"Bought office stationery for $20K. @john @mike\" _ ",
+            body="In case you want to *notify additional users*,  you can do so by adding something like _@john @email_id_ \n Ex.  _\"Bought office stationery for $20K. @john @mike\"_ ",
             to=request.values.get('From', None)
         )
+    time.sleep(1)
+
     message = client.messages \
         .create(
             from_=request.values.get('To', None),

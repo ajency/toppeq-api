@@ -17,7 +17,7 @@ whatsapp_call = Blueprint('whatsapp', __name__)
 @whatsapp_call.route("/sms", methods=['GET', 'POST'])
 def incoming_sms():
     # Get the message the user sent our Twilio number
-    print(vars(values))
+    print(vars(request.values))
     body = request.values.get('Body', None)
 
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../expenseslot.json"

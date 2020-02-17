@@ -182,6 +182,9 @@ def send_nlp_response():
     req = request.get_json(force=True)
 
     inputText = str(req.get('queryResult').get('queryText'))
+    if(inputText == 'reset vars'):
+        oldValue.clearIt()
+        return {'fulfillmentText':  'Cleared'}
 
     oldValue.Description = inputText if oldValue.Description == '' else oldValue.Description
 

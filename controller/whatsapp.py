@@ -21,7 +21,7 @@ def incoming_sms():
     print(vars(request.values))
     body = request.values.get('Body', None)
 
-    if(body.lower() == "new" | | body.lower() == "reset" | | body.lower() == "help"):
+    if(body.lower() == "new" or body.lower() == "reset" or body.lower() == "help"):
         account_sid = 'AC797feaab84bdd385bbb2ae0f1c08e8b6'
         auth_token = '4835d9b49f5dbdd284d5ab2d251918'
         client = Client(account_sid, auth_token)

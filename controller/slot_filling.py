@@ -201,9 +201,13 @@ def buildResultText(outputJSON):
         map(str, outputJSON['data']['createExpense']['expenseTags']))
     resultString += '\n Tags : ' + tagString
     outputUsers = ''
-    userList = outputJSON['data']['createExpense']['notifyUsers']
-    for key in userList.values():
-        outputUsers += (key + ', ')
+    userList = json.dumps(outputJSON['data']['createExpense']['notifyUsers'])
+    print(type(userList))
+    for userMeta in userList.values():
+        names = userMeta['userMeta']
+        for name in names:
+             outputUsers += (names[name] + ', ')
+
     resultString += '\n Users Notified: ' + outputUsers
 
     return resultString

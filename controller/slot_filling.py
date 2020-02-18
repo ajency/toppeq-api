@@ -205,7 +205,7 @@ def buildResultText(outputJSON):
     for userMeta in userList:
         names = userMeta['userMeta']
         for name in names:
-             outputUsers += (names[name] + ', ')
+            outputUsers += (names[name] + ', ')
 
     resultString += '\n Users Notified: ' + outputUsers
 
@@ -399,6 +399,8 @@ def send_nlp_response():
     if 'None' in oldValue.emptyList():
         url = "https://ajency-qa.api.toppeq.com/graphql"
 
+        expduedate = oldValue.DueDate if (
+            oldValue.DueDate) else oldValue.paymentDate
         payload = {
             "operationName": "CreateExpense",
             "variables": {
@@ -416,7 +418,7 @@ def send_nlp_response():
                         "frequency": "monthly"
                     },
                     "finalPaymentDate": oldValue.paymentDate.strftime(r"%Y-%m-%d %H:%M:%S") if(oldValue.paymentDate != '') else '',
-                    "expenseDueDate": oldValue.DueDate.strftime(r"%Y-%m-%d %H:%M:%S") if(oldValue.DueDate != '') else ''
+                    "expenseDueDate": expduedate.strftime(r"%Y-%m-%d %H:%M:%S") if(expduedate != '') else ''
                 }
             },
             "query": "mutation CreateExpense($input: ExpenseInput) {\n createExpense(input: $input) {\n id \n title \n referenceId \n description \n amount \n currency \n expenseDueDate \n finalPaymentDate \n recurring \n referenceId \n paymentStatus \n accountingHead \n{ \n displayName \n} \n notifyUsers \n{ \n userMeta \n{ \n name \n} \n} \n expenseRecurrence \n{ \n frequency \n} \n expenseTags}\n}\n"

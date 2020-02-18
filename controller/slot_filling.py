@@ -190,9 +190,9 @@ def buildResultText(outputJSON):
     if(outputJSON['data']['createExpense']['expenseDueDate'] != ''):
         resultString += '\n Due Date : ' + \
             outputJSON['data']['createExpense']['expenseDueDate']
-    resultString += '\n Recurring : ' + \
+    resultString += ( '\n Recurring : ' + \
         'Yes' if(outputJSON['data']
-                 ['createExpense']['recurring'] == True) else 'No'
+                 ['createExpense']['recurring'] == True) else 'No')
     resultString += '\n Frequency : ' + \
         outputJSON['data']['createExpense']['expenseRecurrence']['frequency']
     resultString += '\n Category : ' + \

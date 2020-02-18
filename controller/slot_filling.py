@@ -176,6 +176,38 @@ def receiveTags(text):
     return ''
 
 
+
+def buildResultText(outputJSON):
+    resultString = '\n Description: ' + \
+        outputJSON['data']['createExpense']['title']
+    resultString += '\n Amount: ' + \
+        outputJSON['data']['createExpense']['currency'] + \
+        ' ' + outputJSON['data']['createExpense']['amount']
+    resultString += '\n Payment Status : ' + \
+        outputJSON['data']['createExpense']['paymentStatus']
+    resultString += '\n Date of Expense : ' + \
+        outputJSON['data']['createExpense']['finalPaymentDate']
+    resultString += '\n Due Date : ' + \
+        outputJSON['data']['createExpense']['expenseDueDate']
+    resultString += '\n Recurring : ' + \
+        'Yes' if(True in outputJSON['data']
+                 ['createExpense']['recurring']) else 'No'
+    resultString += '\n Frequency : ' + \
+        outputJSON['data']['createExpense']['expenseRecurrence']['monthly']
+    resultString += '\n Category : ' + \
+        outputJSON['data']['createExpense']['accountingHead']['displayName']
+    tagString = ','.join(
+        map(str, outputJSON['data']['createExpense']['expenseTags']))
+    resultString += '\n Tags : ' + tagString
+    outputUsers = ''
+    userList = outputJSON['data']['createExpense']['notifyUsers']
+    for key in userList:
+        outputUsers += (userList[key] + ', ')
+    resultString += '\n Users Notified: ' + outputUsers
+
+    return resultString
+
+
 @slot_fill.route('/slotfill/', methods=['GET', 'POST'])
 def send_nlp_response():
 
@@ -194,7 +226,6 @@ def send_nlp_response():
 
     listTosend = {'inputText':  str(filteredText)}
 
-
     document = language.types.Document(
         content=filteredText.title(),
         type=language.enums.Document.Type.PLAIN_TEXT
@@ -207,6 +238,7 @@ def send_nlp_response():
         classify_text=False)
 
     response = client1.annotate_text(document, features)
+    print('Checking for : '+oldValue.askFor)
 
     changeVar = 0
     for entity in response.entities:
@@ -226,7 +258,6 @@ def send_nlp_response():
                     timedelta(days=(oldValue.paymentDate.day-1))
 
     oldValue.fullEntity = changeVar
-    print('Checking for : '+oldValue.askFor)
 
     # Step 3.1: if price is detected by NLP, mark it with currency
     flag = 0 if(oldValue.Amount == '0') else 1
@@ -329,34 +360,34 @@ def send_nlp_response():
 
     result = 'Great! Your expense was added successfully ✅ \n\n'
     if(oldValue.Amount != '0'):
-        result += ' Amount : ' + \
+        result += 'Amount : ' + \
             str(oldValue.currency) + ' ' + str(oldValue.Amount) + ' \n  \n'
 
-    result += ' Entities : ' + oldValue.entitySend + ' \n  \n'
-    result += ' ExpenseType: ' + oldValue.ExpenseType + ' \n  \n'
+    result += 'Entities : ' + oldValue.entitySend + ' \n  \n'
+    result += 'ExpenseType: ' + oldValue.ExpenseType + ' \n  \n'
     if('Rent' in oldValue.ExpenseType):
-        result += ' Recurrence : ' + oldValue.recurrence + ' \n  \n'
+        result += 'Recurrence : ' + oldValue.recurrence + ' \n  \n'
         if('Yes' in oldValue.recurrence):
-            result += ' Frequency : ' + oldValue.frequency + ' \n  \n'
+            result += 'Frequency : ' + oldValue.frequency + ' \n  \n'
 
-    result += ' Payment Status : ' + oldValue.paymentStatus + ' \n  \n'
+    result += 'Payment Status : ' + oldValue.paymentStatus + ' \n  \n'
 
     if(oldValue.paymentStatus == 'Paid'):
         try:
-            result += ' Payment Date : ' + \
+            result += 'Payment Date : ' + \
                 oldValue.paymentDate.strftime(r"%b %d %Y ") + ' \n  \n'
         except:
             print('No date yet')
         try:
-            result += ' Due Date : ' + \
+            result += 'Due Date : ' + \
                 oldValue.DueDate.strftime(r"%b %d %Y ") + ' \n  \n'
         except:
             print('No Due Date')
 
-    result += ' Payment Category : ' + oldValue.category + ' \n  \n'
+    result += 'Payment Category : ' + oldValue.category + ' \n  \n'
     tagString = ','.join(map(str, oldValue.tags))
     tagString = re.sub('_', ' ', tagString)
-    result += ' Tags : ' + ' ' + tagString.lower() + ' \n  \n'
+    result += 'Tags : ' + ' ' + tagString.lower() + ' \n  \n'
 
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()
@@ -368,17 +399,25 @@ def send_nlp_response():
             "operationName": "CreateExpense",
             "variables": {
                 "input": {
-                    "company": "2",
+                    "company": 2,
                     "title": oldValue.Description,
                     "description": oldValue.Description,
                     "amount": oldValue.Amount,
-                    "paymentStatus": oldValue.paymentStatus,
+                    "currency": oldValue.currency,
                     "recurring": True if('Yes' in oldValue.recurrence) else False,
-                    "status": "draft"
-                }
+                    "paymentStatus": oldValue.paymentStatus,
+                    "sourceDriver": "chatbot",
+                    "status": "draft",
+                    "expenseRecurrence": {
+                        "frequency": "monthly"
+                    }
+                },
+                "finalPaymentDate": oldValue.paymentDate,
+                "expenseDueDate": oldValue.DueDate
             },
-            "query": "mutation CreateExpense($input: ExpenseInput) {\n  createExpense(input: $input) {\n    id\n    referenceId\n   }\n}\n"
+            "query": "mutation CreateExpense($input: ExpenseInput) {\n createExpense(input: $input) {\n id \n title \n referenceId \n description \n amount \n currency \n expenseDueDate \n finalPaymentDate \n recurring \n referenceId \n paymentStatus \n accountingHead \n{ \n displayName \n} \n notifyUsers \n{ \n userMeta \n{ \n name \n} \n} \n expenseRecurrence \n{ \n frequency \n} \n expenseTags}\n}\n"
         }
+
         headers = {'Content-Type': 'application/json'}
         print(payload)
 
@@ -392,7 +431,9 @@ def send_nlp_response():
             if(outputJSON['data']['createExpense']['id']):
                 OutputURL = OutputURL + \
                     str(outputJSON['data']['createExpense']['id'])
-                result = OutputURL
+
+                result = OutputURL + buildResultText(outputJSON)
+                # build result here
 
         except Exception as e:
             print('API Failed')
@@ -403,8 +444,8 @@ def send_nlp_response():
         result = 'How much was the amount for the transaction?'
     elif 'Date' in oldValue.emptyList():
         result = 'What is the date of the transaction? '
-    # elif 'Entity' in oldValue.emptyList():
-        #result = 'What was the transaction done for?'
+    elif 'Entity' in oldValue.emptyList():
+        result = 'What was the transaction done for?'
     elif 'Frequency' in oldValue.emptyList():
         result = 'How freqently you want the transaction to repeat? \n (Yearly, Monthly, Weekly)'
     return {'fulfillmentText':  result}

@@ -89,10 +89,11 @@ def incoming_sms():
 
     # Determine the right reply for this message
     resp.message(response.query_result.fulfillment_text)
+    outputIntent = response.query_result.intent.displayName
     print(str(resp))
     if(response.query_result.fulfillment_text == 'Cleared'):
         resp = ''
-        if(incoming_text.lower() == "new" or incoming_text.lower() == "hi" or incoming_text.lower() == "hello"):
+        if(outputIntent == 'Default Welcome Intent'):
             new_text()
         help_text()
     return str(resp)

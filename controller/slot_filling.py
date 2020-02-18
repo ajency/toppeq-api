@@ -201,9 +201,8 @@ def buildResultText(outputJSON):
         map(str, outputJSON['data']['createExpense']['expenseTags']))
     resultString += '\n Tags : ' + tagString
     outputUsers = ''
-    userList = json.dumps(outputJSON['data']['createExpense']['notifyUsers'])
-    print(type(userList))
-    for userMeta in userList.values():
+    userList = (outputJSON['data']['createExpense']['notifyUsers'])
+    for userMeta in userList:
         names = userMeta['userMeta']
         for name in names:
              outputUsers += (names[name] + ', ')
@@ -432,7 +431,6 @@ def send_nlp_response():
             print(response)
             OutputURL = 'Great! Your expense was added successfully ✅ \n  https://ajency-qa.toppeq.com/cashflow/outflow/planned#/db_'
             outputJSON = response.json()
-            print('JSON = ', str(outputJSON))
             if(outputJSON['data']['createExpense']['id']):
                 OutputURL = OutputURL + \
                     str(outputJSON['data']['createExpense']['id'])

@@ -12,9 +12,15 @@ from google.cloud.language_v1 import enums, types
 from google.oauth2.service_account import Credentials
 
 account_sid = 'AC797feaab84bdd385bbb2ae0f1c08e8b6'
-auth_token = os.environ['TWILIOAPIKEY']
+
+with open('../twiliokey.json', 'r') as jsonfile:
+    data = jsonfile.read()
+
+obj = json.loads(data)
+auth_token = str(obj['key'])
 
 whatsapp_call = Blueprint('whatsapp', __name__)
+
 
 def new_text():
     client = Client(account_sid, auth_token)
@@ -54,14 +60,13 @@ def help_text():
         )
 
 
-
 @whatsapp_call.route("/sms", methods=['GET', 'POST'])
 def incoming_sms():
     # Get the message the user sent our Twilio number
     print(vars(request.values))
     body = request.values.get('Body', None)
     incoming_text = body
-    if(body.lower() == "new" or body.lower() == "reset" or body.lower() == "help" or body.lower() == "hi" or body.lower() == "hello" ):
+    if(body.lower() == "new" or body.lower() == "reset" or body.lower() == "help" or body.lower() == "hi" or body.lower() == "hello"):
         body = 'reset vars'
 
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../expenseslot.json"

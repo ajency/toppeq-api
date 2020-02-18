@@ -49,7 +49,7 @@ def help_text():
     message = client.messages \
         .create(
             from_=request.values.get('To', None),
-            body="Tip: :bulb: Type _\"new\"_ or _\"reset\"_, anytime if you want to start adding a fresh expense. To learn more about adding an expense, simply type _ \"help\"  _",
+            body="Tip: 💡 Type _\"new\"_ or _\"reset\"_, anytime if you want to start adding a fresh expense. To learn more about adding an expense, simply type _\"help\"_",
             to=request.values.get('From', None)
         )
 

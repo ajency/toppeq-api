@@ -191,10 +191,10 @@ def buildResultText(outputJSON):
         resultString += '\n Due Date : ' + \
             outputJSON['data']['createExpense']['expenseDueDate']
     resultString += '\n Recurring : ' + \
-        'Yes' if(True in outputJSON['data']
-                 ['createExpense']['recurring']) else 'No'
+        'Yes' if(outputJSON['data']
+                 ['createExpense']['recurring'] == True) else 'No'
     resultString += '\n Frequency : ' + \
-        outputJSON['data']['createExpense']['expenseRecurrence']['monthly']
+        outputJSON['data']['createExpense']['expenseRecurrence']['frequency']
     resultString += '\n Category : ' + \
         outputJSON['data']['createExpense']['accountingHead']['displayName']
     tagString = ','.join(
@@ -202,6 +202,7 @@ def buildResultText(outputJSON):
     resultString += '\n Tags : ' + tagString
     outputUsers = ''
     userList = outputJSON['data']['createExpense']['notifyUsers']
+    print(type(userList))
     for key in userList:
         outputUsers += (userList[key] + ', ')
     resultString += '\n Users Notified: ' + outputUsers

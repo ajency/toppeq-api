@@ -3,6 +3,7 @@ from flask import Flask, request, redirect, Blueprint
 from twilio.twiml.messaging_response import MessagingResponse
 import time
 import os
+import json
 import dialogflow_v2
 from dialogflow_v2 import types
 from twilio.rest import Client
@@ -94,7 +95,7 @@ def incoming_sms():
         if(incoming_text.lower() == "new" or incoming_text.lower() == "hi" or incoming_text.lower() == "hello"):
             new_text()
         help_text()
-    return resp
+    return str(resp)
 
 
 @whatsapp_call.route("/status", methods=['GET', 'POST'])

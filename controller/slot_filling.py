@@ -202,9 +202,8 @@ def buildResultText(outputJSON):
     resultString += '\n Tags : ' + tagString
     outputUsers = ''
     userList = outputJSON['data']['createExpense']['notifyUsers']
-    print(type(userList))
-    for key in userList:
-        outputUsers += (userList[key] + ', ')
+    for key in userList.values():
+        outputUsers += (key + ', ')
     resultString += '\n Users Notified: ' + outputUsers
 
     return resultString

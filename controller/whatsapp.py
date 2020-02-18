@@ -67,7 +67,7 @@ def incoming_sms():
     print(vars(request.values))
     body = request.values.get('Body', None)
     incoming_text = body
-    if(body.lower() == "new" or body.lower() == "reset" or body.lower() == "help" or body.lower() == "hi" or body.lower() == "hello"):
+    if(body.lower() == "new" or body.lower() == "reset" or body.lower() == "help"):
         body = 'reset vars'
 
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../expenseslot.json"
@@ -89,7 +89,7 @@ def incoming_sms():
 
     # Determine the right reply for this message
     resp.message(response.query_result.fulfillment_text)
-    outputIntent = response.query_result.intent.displayName
+    outputIntent = response.query_result.intent.display_name
     print(str(resp))
     if(response.query_result.fulfillment_text == 'Cleared'):
         resp = ''

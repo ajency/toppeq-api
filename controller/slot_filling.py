@@ -176,7 +176,6 @@ def receiveTags(text):
     return ''
 
 
-
 def buildResultText(outputJSON):
     resultString = '\n Description: ' + \
         outputJSON['data']['createExpense']['title']
@@ -412,8 +411,8 @@ def send_nlp_response():
                         "frequency": "monthly"
                     }
                 },
-                "finalPaymentDate": oldValue.paymentDate,
-                "expenseDueDate": oldValue.DueDate
+                "finalPaymentDate": oldValue.paymentDate.strftime(r"%Y-%m-%d %H:%M:%s") if(oldValue.paymentDate == '') else '',
+                "expenseDueDate": oldValue.DueDate.strftime(r"%Y-%m-%d %H:%M:%s") if(oldValue.DueDate == '') else ''
             },
             "query": "mutation CreateExpense($input: ExpenseInput) {\n createExpense(input: $input) {\n id \n title \n referenceId \n description \n amount \n currency \n expenseDueDate \n finalPaymentDate \n recurring \n referenceId \n paymentStatus \n accountingHead \n{ \n displayName \n} \n notifyUsers \n{ \n userMeta \n{ \n name \n} \n} \n expenseRecurrence \n{ \n frequency \n} \n expenseTags}\n}\n"
         }

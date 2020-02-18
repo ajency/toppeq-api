@@ -181,13 +181,15 @@ def buildResultText(outputJSON):
         outputJSON['data']['createExpense']['title']
     resultString += '\n Amount: ' + \
         outputJSON['data']['createExpense']['currency'] + \
-        ' ' + outputJSON['data']['createExpense']['amount']
+        ' ' + str(outputJSON['data']['createExpense']['amount'])
     resultString += '\n Payment Status : ' + \
         outputJSON['data']['createExpense']['paymentStatus']
-    resultString += '\n Date of Expense : ' + \
-        outputJSON['data']['createExpense']['finalPaymentDate']
-    resultString += '\n Due Date : ' + \
-        outputJSON['data']['createExpense']['expenseDueDate']
+    if(outputJSON['data']['createExpense']['finalPaymentDate'] ! = ''):
+        resultString += '\n Date of Expense : ' + \
+            outputJSON['data']['createExpense']['finalPaymentDate']
+    if(outputJSON['data']['createExpense']['expenseDueDate'] ! = ''):
+        resultString += '\n Due Date : ' + \
+            outputJSON['data']['createExpense']['expenseDueDate']
     resultString += '\n Recurring : ' + \
         'Yes' if(True in outputJSON['data']
                  ['createExpense']['recurring']) else 'No'
@@ -411,8 +413,8 @@ def send_nlp_response():
                         "frequency": "monthly"
                     }
                 },
-                "finalPaymentDate": oldValue.paymentDate.strftime(r"%Y-%m-%d %H:%M:%S") if(oldValue.paymentDate == '') else '',
-                "expenseDueDate": oldValue.DueDate.strftime(r"%Y-%m-%d %H:%M:%S") if(oldValue.DueDate == '') else ''
+                "finalPaymentDate": oldValue.paymentDate.strftime(r"%Y-%m-%d %H:%M:%S") if(oldValue.paymentDate != '') else '',
+                "expenseDueDate": oldValue.DueDate.strftime(r"%Y-%m-%d %H:%M:%S") if(oldValue.DueDate != '') else ''
             },
             "query": "mutation CreateExpense($input: ExpenseInput) {\n createExpense(input: $input) {\n id \n title \n referenceId \n description \n amount \n currency \n expenseDueDate \n finalPaymentDate \n recurring \n referenceId \n paymentStatus \n accountingHead \n{ \n displayName \n} \n notifyUsers \n{ \n userMeta \n{ \n name \n} \n} \n expenseRecurrence \n{ \n frequency \n} \n expenseTags}\n}\n"
         }

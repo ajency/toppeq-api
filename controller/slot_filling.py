@@ -118,7 +118,8 @@ def removeConsecutiveSpaces(text):
 
     List = re.findall(r'([0-9]+)\+([0-9]+)', value)
     for items in List:
-        value = value.replace(str(items[0])+r'+'+str(items[1]), str(int(items[0]) + int(items[1])))
+        value = value.replace(
+            str(items[0])+r'+'+str(items[1]), str(int(items[0]) + int(items[1])))
 
     return value
 
@@ -229,7 +230,7 @@ def send_nlp_response():
     oldValue.fullEntity = changeVar
     print('Checking for : '+oldValue.askFor)
 
-      # Step 3.1: if price is detected by NLP, mark it with currency
+    # Step 3.1: if price is detected by NLP, mark it with currency
     flag = 0 if(oldValue.Amount == '0') else 1
 
     if(oldValue.Amount == '0'):
@@ -332,7 +333,7 @@ def send_nlp_response():
                     oldValue.DueDate = oldValue.paymentDate - \
                         timedelta(days=(oldValue.paymentDate.day-1))
 
-    result = 'Expense recorded as: \n\n'
+    result = 'Great! Your expense was added successfully ✅ \n\n'
     if(oldValue.Amount != '0'):
         result += ' Amount : ' + \
             str(oldValue.currency) + ' ' + str(oldValue.Amount) + ' \n  \n'
@@ -366,7 +367,7 @@ def send_nlp_response():
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()
     print('Output Text is Filtered (Pre query) : ',
-            str(datetime.now() - start_time))
+          str(datetime.now() - start_time))
     pprint(vars(oldValue))
     if 'None' in oldValue.emptyList():
         url = "https://ajency-qa.api.toppeq.com/graphql"
@@ -393,7 +394,7 @@ def send_nlp_response():
             response = requests.request(
                 "POST", url, headers=headers, data=json.dumps(payload))
             print(response)
-            OutputURL = 'Your Transaction has been recorded. To Check it, Click the link below. \n  https://ajency-qa.toppeq.com/cashflow/outflow/planned#/db_'
+            OutputURL = 'Great! Your expense was added successfully ✅ \n  https://ajency-qa.toppeq.com/cashflow/outflow/planned#/db_'
             outputJSON = response.json()
             print('JSON = ', str(outputJSON))
             if(outputJSON['data']['createExpense']['id']):

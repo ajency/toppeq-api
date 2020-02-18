@@ -179,7 +179,6 @@ def receiveTags(text):
 @slot_fill.route('/slotfill/', methods=['GET', 'POST'])
 def send_nlp_response():
 
-    start_time = datetime.now()
     req = request.get_json(force=True)
 
     inputText = str(req.get('queryResult').get('queryText'))
@@ -192,10 +191,9 @@ def send_nlp_response():
     inputIntent = str(req.get('queryResult').get('intent').get('displayName'))
 
     filteredText = filterResults(inputText)
-    print('Text is Filtered: ', str(datetime.now() - start_time))
 
     listTosend = {'inputText':  str(filteredText)}
-    print('Payment Status is Filtered: ', str(datetime.now() - start_time))
+
 
     document = language.types.Document(
         content=filteredText.title(),
@@ -257,8 +255,6 @@ def send_nlp_response():
 
             if(int(maxValue) > 0):
                 oldValue.Amount = maxValue
-                flag = 1
-    print('Amount is Filtered: ', str(datetime.now() - start_time))
 
     # Step 3.5 Detect Recurrence
 
@@ -321,8 +317,6 @@ def send_nlp_response():
         except:
             print('Date Error')
 
-    print('Date is Filtered: ', str(datetime.now() - start_time))
-
     # Detect Tense for Paid/Unpaid
     for token in response.tokens:
         # 3 = enum for Past
@@ -366,8 +360,6 @@ def send_nlp_response():
 
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()
-    print('Output Text is Filtered (Pre query) : ',
-          str(datetime.now() - start_time))
     pprint(vars(oldValue))
     if 'None' in oldValue.emptyList():
         url = "https://ajency-qa.api.toppeq.com/graphql"
@@ -402,7 +394,6 @@ def send_nlp_response():
                     str(outputJSON['data']['createExpense']['id'])
                 result = OutputURL
 
-            print('Response Received: ', str(datetime.now() - start_time))
         except Exception as e:
             print('API Failed')
             print(e)
@@ -416,5 +407,4 @@ def send_nlp_response():
         #result = 'What was the transaction done for?'
     elif 'Frequency' in oldValue.emptyList():
         result = 'How freqently you want the transaction to repeat? \n (Yearly, Monthly, Weekly)'
-    print('Sending response: ', str(datetime.now() - start_time))
     return {'fulfillmentText':  result}

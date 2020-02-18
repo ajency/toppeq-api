@@ -121,7 +121,6 @@ def getTags(JSONObject):
 def add_message():
     # Async Process for Accounting Head
 
-    start = datetime.now()
     with concurrent.futures.ThreadPoolExecutor() as executor:
         future = executor.submit(sendResponse, request.json)
         future1 = executor.submit(getTags, request.json)
@@ -132,7 +131,4 @@ def add_message():
         newList.append(acHead["accountHead"])
         acHead["outflow_tags"] = newList
         print(str(acHead))
-        end = datetime.now()
-        time_taken = end - start
-        print('Time: ', time_taken)
         return jsonify(acHead)

@@ -193,7 +193,7 @@ def buildResultText(outputJSON):
 
     recurringString = 'Yes' if(
         outputJSON['data']['createExpense']['recurring'] == True) else 'No'
-    resultString += '\n Recurring : ' + recurringString
+    resultString += '\n Recurring : ' + outputJSON['data']['createExpense']['recurring']
 
     if(outputJSON['data']['createExpense']['expenseRecurrence']['frequency'] != ''):
         resultString += '\n Frequency : ' + \

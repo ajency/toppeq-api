@@ -191,7 +191,7 @@ def buildResultText(outputJSON):
 
     if(outputJSON['data']['createExpense']['expenseDueDate']):
         displayDate = dateparser.parse(str(outputJSON['data']['createExpense']['expenseDueDate'])
-        resultString += '\n*Due Date* : ' + displayDate.strftime(r"%d %B %Y")
+        resultString += ('\n*Due Date* : ' + displayDate.strftime(r"%d %B %Y"))
 
     recurringString='Yes' if(
         str(outputJSON['data']['createExpense']['recurring']).lower() == 'true') else 'No'

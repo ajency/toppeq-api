@@ -184,33 +184,33 @@ def buildResultText(outputJSON):
         outputJSON['data']['createExpense']['paymentStatus']
 
     if(outputJSON['data']['createExpense']['finalPaymentDate']):
+        displayDate = dateparser.parse(
+            str(outputJSON['data']['createExpense']['finalPaymentDate']))
         resultString += '\n*Date of Expense Paid* : ' + \
-            outputJSON['data']['createExpense']['finalPaymentDate']
+            displayDate.strftime(r"%d %B %Y")
 
     if(outputJSON['data']['createExpense']['expenseDueDate']):
-        resultString += '\n*Due Date* : ' + \
-            outputJSON['data']['createExpense']['expenseDueDate']
+        displayDate = dateparser.parse(str(outputJSON['data']['createExpense']['expenseDueDate'])
+        resultString += '\n*Due Date* : ' + displayDate.strftime(r"%d %B %Y")
 
-    print(type(outputJSON['data']['createExpense']['recurring']))
-    recurringString = 'Yes' #if(
-    #     str(outputJSON['data']['createExpense']['recurring']).lower() == 'true') else 'No'
-    # resultString += '\n*Recurring* : ' + \
-    #     outputJSON['data']['createExpense']['recurring']
+    recurringString='Yes' if(
+        str(outputJSON['data']['createExpense']['recurring']).lower() == 'true') else 'No'
+    resultString += '\n*Recurring* : ' + recurringString
 
     if(outputJSON['data']['createExpense']['expenseRecurrence']['frequency'] != ''):
-        resultString += '\n*Frequency* : ' + \
+        resultString += '\n*Frequency* : ' +
             outputJSON['data']['createExpense']['expenseRecurrence']['frequency']
 
-    resultString += '\n*Category* : ' + \
+    resultString += '\n*Category* : ' +
         outputJSON['data']['createExpense']['accountingHead']['displayName']
-    tagString = ','.join(
+    tagString=','.join(
         map(str, outputJSON['data']['createExpense']['expenseTags']))
     resultString += '\n*Tags* : #' + tagString.replace(',', ', #')
 
-    outputUsers = ''
-    userList = (outputJSON['data']['createExpense']['notifyUsers'])
+    outputUsers=''
+    userList=(outputJSON['data']['createExpense']['notifyUsers'])
     for userMeta in userList:
-        names = userMeta['userMeta']
+        names=userMeta['userMeta']
         for name in names:
             outputUsers += (' '+names[name] + ',')
 
@@ -222,130 +222,130 @@ def buildResultText(outputJSON):
 @slot_fill.route('/slotfill/', methods=['GET', 'POST'])
 def send_nlp_response():
 
-    req = request.get_json(force=True)
+    req=request.get_json(force=True)
 
-    inputText = str(req.get('queryResult').get('queryText'))
+    inputText=str(req.get('queryResult').get('queryText'))
     if(inputText == 'reset vars'):
         oldValue.clearIt()
         return {'fulfillmentText':  'Cleared'}
 
-    oldValue.Description = inputText if oldValue.Description == '' else oldValue.Description
+    oldValue.Description=inputText if oldValue.Description == '' else oldValue.Description
 
-    inputIntent = str(req.get('queryResult').get('intent').get('displayName'))
+    inputIntent=str(req.get('queryResult').get('intent').get('displayName'))
 
-    filteredText = filterResults(inputText)
+    filteredText=filterResults(inputText)
 
-    listTosend = {'inputText':  str(filteredText)}
+    listTosend={'inputText':  str(filteredText)}
 
-    document = language.types.Document(
+    document=language.types.Document(
         content=filteredText.title(),
         type=language.enums.Document.Type.PLAIN_TEXT
     )
-    features = language.types.AnnotateTextRequest.Features(
+    features=language.types.AnnotateTextRequest.Features(
         extract_syntax=True,
         extract_entities=True,
         extract_document_sentiment=False,
         extract_entity_sentiment=False,
         classify_text=False)
 
-    response = client1.annotate_text(document, features)
+    response=client1.annotate_text(document, features)
     print('Checking for : '+oldValue.askFor)
 
-    changeVar = 0
+    changeVar=0
     for entity in response.entities:
-        entityDetectList = ["CONSUMER_GOOD", "OTHER", "WORK_OF_ART",
+        entityDetectList=["CONSUMER_GOOD", "OTHER", "WORK_OF_ART",
                             "UNKNOWN", "EVENT", "PERSON", "ORGANIZATION"]
         # For List of entities
         if any(x in enums.Entity.Type(entity.type).name for x in entityDetectList):
             if((entity.name.title() != 'Subscription' or entity.name.title() != 'Rent' or entity.name.title() != 'Purchase')):
                 if(oldValue.askFor == 'None' or oldValue.askFor == 'Entity'):
                     oldValue.entitySend += (entity.name + ', ')
-                    changeVar = 1
+                    changeVar=1
     # For date
         if ("DATE" in enums.Entity.Type(entity.type).name):
-            oldValue.paymentDate = dateparser.parse(entity.name)
+            oldValue.paymentDate=dateparser.parse(entity.name)
 
-    oldValue.fullEntity = changeVar
+    oldValue.fullEntity=changeVar
 
     # Step 3.1: if price is detected by NLP, mark it with currency
-    flag = 0 if(oldValue.Amount == '0') else 1
+    flag=0 if(oldValue.Amount == '0') else 1
 
     if(oldValue.Amount == '0'):
         for entity in response.entities:
             if(enums.Entity.Type(entity.type).name == "PRICE" and flag == 0):
-                oldValue.Amount = float(entity.metadata[u"value"])
-                oldValue.currency = entity.metadata[u"currency"]
-                flag = 1
+                oldValue.Amount=float(entity.metadata[u"value"])
+                oldValue.currency=entity.metadata[u"currency"]
+                flag=1
 
         # Step 3.3 Check from Dialogflow
         if(flag == 0):
             if(req.get('queryResult').get('parameters').get('PRICE')):
-                oldValue.Amount = float(
+                oldValue.Amount=float(
                     req.get('queryResult').get('parameters').get('PRICE'))
-                flag = 1
+                flag=1
 
         # Step 3.4 In case nothing is found, pick a number from the list
         if(flag == 0):
-            maxValue = 0
+            maxValue=0
             for entity in response.entities:
                 if(enums.Entity.Type(entity.type).name == "NUMBER"):
-                    maxValue = float(entity.metadata[u"value"]) if(
+                    maxValue=float(entity.metadata[u"value"]) if(
                         int(float(entity.metadata[u"value"])) > int(float(maxValue))) else maxValue
 
             if(int(maxValue) > 0):
-                oldValue.Amount = maxValue
+                oldValue.Amount=maxValue
 
     # Step 3.5 Detect Recurrence
 
     if(oldValue.ExpenseType == ''):
         if(req.get('queryResult').get('intent').get('displayName') == "checkRentExpense"):
-            oldValue.recurrence = "Yes"
-            oldValue.ExpenseType = "Rent/Subscription"
+            oldValue.recurrence="Yes"
+            oldValue.ExpenseType="Rent/Subscription"
 
-            textString = filteredText.lower()
+            textString=filteredText.lower()
             if("weekly" in textString or "per week" in textString):
-                oldValue.frequency = "Weekly"
+                oldValue.frequency="Weekly"
             elif("yearly" in textString or "per year" in textString or "annual" in textString):
-                oldValue.frequency = "Yearly"
+                oldValue.frequency="Yearly"
             elif("monthly" in textString or "per month" in textString or "every month" in textString):
-                oldValue.frequency = "Monthly"
+                oldValue.frequency="Monthly"
         else:
-            oldValue.ExpenseType = "Buy/Purchase"
+            oldValue.ExpenseType="Buy/Purchase"
 
     elif(oldValue.askFor == 'Frequency'):
-        textString = filteredText.lower()
+        textString=filteredText.lower()
         if("weekly" in textString or "per week" in textString):
-            oldValue.frequency = "Weekly"
+            oldValue.frequency="Weekly"
         elif("yearly" in textString or "per year" in textString or "annual" in textString):
-            oldValue.frequency = "Yearly"
+            oldValue.frequency="Yearly"
         elif("monthly" in textString or "per month" in textString or "every month" in textString):
-            oldValue.frequency = "Monthly"
+            oldValue.frequency="Monthly"
 
     # Check if Dialogflow had picked up a date (18th, last wednesday)
     if(oldValue.askFor == 'Date' or oldValue.askFor == 'None'):
-        oldValue.paymentDate = dateparser.parse(str(filteredText))
+        oldValue.paymentDate=dateparser.parse(str(filteredText))
         if(oldValue.paymentDate == None):
             print('failed to parse data')
-            oldValue.paymentDate = ''
+            oldValue.paymentDate=''
 
     if(oldValue.paymentDate == ''):
         if(req.get('queryResult').get('parameters').get('date')):
-            oldValue.paymentDate = dateparser.parse(
+            oldValue.paymentDate=dateparser.parse(
                 str(req.get('queryResult').get('parameters').get('date')))
 
             if(str(int(float(oldValue.Amount))) in str(req.get('queryResult').get('parameters').get('date'))):
-                oldValue.Amount = '0'
+                oldValue.Amount='0'
 
         # Check if Dialogflow had picked up a date (this month, next june, last year)
         try:
             if(req.get('queryResult').get('parameters').get('date-period') != ''):
                 if(req.get('queryResult').get('parameters').get('date-period').get('endDate')):
-                    oldValue.paymentDate = dateparser.parse(
+                    oldValue.paymentDate=dateparser.parse(
                         req.get('queryResult').get('parameters').get('date-period').get('endDate'))
 
                 # If the number caught by amount is in date, negate that.
                 if(str(int(float(oldValue.Amount))) in str(req.get('queryResult').get('parameters').get('date'))):
-                    oldValue.Amount = '0'
+                    oldValue.Amount='0'
 
         except:
             print('Date Error')
@@ -354,17 +354,17 @@ def send_nlp_response():
     for token in response.tokens:
         # 3 = enum for Past
         if(token.part_of_speech.tense == 3):
-            oldValue.paymentStatus = "Paid"
+            oldValue.paymentStatus="Paid"
 
     print('Missing Value = ' + oldValue.emptyList())
-    oldValue.askFor = oldValue.emptyList()
+    oldValue.askFor=oldValue.emptyList()
     pprint(vars(oldValue))
     if 'None' in oldValue.emptyList():
-        url = "https://ajency-qa.api.toppeq.com/graphql"
+        url="https://ajency-qa.api.toppeq.com/graphql"
 
-        dateKey = "finalPaymentDate" if oldValue.paymentStatus == "Paid" else "expenseDueDate"
-        dateValue = oldValue.paymentDate.strftime(r"%Y-%m-%d %H:%M:%S")
-        payload = {
+        dateKey="finalPaymentDate" if oldValue.paymentStatus == "Paid" else "expenseDueDate"
+        dateValue=oldValue.paymentDate.strftime(r"%Y-%m-%d %H:%M:%S")
+        payload={
             "operationName": "CreateExpense",
             "variables": {
                 "input": {
@@ -386,38 +386,38 @@ def send_nlp_response():
             "query": "mutation CreateExpense($input: ExpenseInput) {\n createExpense(input: $input) {\n id \n title \n referenceId \n description \n amount \n currency \n expenseDueDate \n finalPaymentDate \n recurring \n referenceId \n paymentStatus \n accountingHead \n{ \n displayName \n} \n notifyUsers \n{ \n userMeta \n{ \n name \n} \n} \n expenseRecurrence \n{ \n frequency \n} \n expenseTags}\n}\n"
         }
 
-        headers = {'Content-Type': 'application/json'}
+        headers={'Content-Type': 'application/json'}
         print('Before sending API call')
         print(json.dumps(payload))
-        result = 'Sorry, we were unable to add your expense to our server. Please restart the conversation. '
+        result='Sorry, we were unable to add your expense to our server. Please restart the conversation. '
 
         try:
-            response = requests.request(
+            response=requests.request(
                 "POST", url, headers=headers, data=json.dumps(payload))
             # print(response)
-            OutputURL = 'Great! Your expense was added successfully ✅ \n  https://ajency-qa.toppeq.com/cashflow/outflow/planned#/db_'
-            outputJSON = response.json()
+            OutputURL='Great! Your expense was added successfully ✅ \n  https://ajency-qa.toppeq.com/cashflow/outflow/planned#/db_'
+            outputJSON=response.json()
             if(outputJSON['data']['createExpense']['id']):
-                OutputURL = OutputURL + \
+                OutputURL=OutputURL + \
                     str(outputJSON['data']['createExpense']['id'])
 
-                result = OutputURL + buildResultText(outputJSON)
+                result=OutputURL + buildResultText(outputJSON)
 
         except Exception as e:
             print('API Failed')
             print(e)
-            result = 'Sorry, we were unable to add your expense to our server.'
+            result='Sorry, we were unable to add your expense to our server.'
         oldValue.clearIt()
 
     elif 'Amount' in oldValue.emptyList():
-        result = 'How much was the amount for the transaction?'
+        result='How much was the amount for the transaction?'
     elif 'Date' in oldValue.emptyList():
         if(oldValue.paymentStatus == "Paid"):
-            result = 'When was the expense done?'
+            result='When was the expense done?'
         else:
-            result = 'When are you planning to do the expense? '
+            result='When are you planning to do the expense? '
     elif 'Entity' in oldValue.emptyList():
-        result = 'What was the transaction done for?'
+        result='What was the transaction done for?'
     elif 'Frequency' in oldValue.emptyList():
-        result = 'How freqently you want the transaction to repeat? \n (Yearly, Monthly, Weekly)'
+        result='How freqently you want the transaction to repeat? \n (Yearly, Monthly, Weekly)'
     return {'fulfillmentText':  result}

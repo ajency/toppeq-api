@@ -191,10 +191,10 @@ def buildResultText(outputJSON):
         resultString += '\n Due Date : ' + \
             outputJSON['data']['createExpense']['expenseDueDate']
 
-    recurringString = 'Yes' if(
-        outputJSON['data']['createExpense']['recurring'] == True) else 'No'
-    resultString += '\n Recurring : ' + \
-        outputJSON['data']['createExpense']['recurring']
+     recurringString = 'Yes' #if(
+    #     outputJSON['data']['createExpense']['recurring'] == True) else 'No'
+    # resultString += '\n Recurring : ' + \
+    #     outputJSON['data']['createExpense']['recurring']
 
     if(outputJSON['data']['createExpense']['expenseRecurrence']['frequency'] != ''):
         resultString += '\n Frequency : ' + \
@@ -386,13 +386,13 @@ def send_nlp_response():
         }
 
         headers = {'Content-Type': 'application/json'}
+        print('Before sending API call')
         print(json.dumps(payload))
         result = 'Sorry, we were unable to add your expense to our server. Please restart the conversation. '
 
         try:
-            response = requests.request(
-                "POST", url, headers=headers, data=json.dumps(payload))
-            print(response)
+            response = requests.request("POST", url, headers=headers, data=json.dumps(payload))
+            # print(response)
             OutputURL = 'Great! Your expense was added successfully ✅ \n  https://ajency-qa.toppeq.com/cashflow/outflow/planned#/db_'
             outputJSON = response.json()
             if(outputJSON['data']['createExpense']['id']):

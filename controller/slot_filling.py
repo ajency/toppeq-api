@@ -184,15 +184,18 @@ def buildResultText(outputJSON):
         ' ' + str(outputJSON['data']['createExpense']['amount'])
     resultString += '\n Payment Status : ' + \
         outputJSON['data']['createExpense']['paymentStatus']
-    if(outputJSON['data']['createExpense']['finalPaymentDate'] != ''):
+
+    if(outputJSON['data']['createExpense']['finalPaymentDate']):
         resultString += '\n Date of Expense : ' + \
             outputJSON['data']['createExpense']['finalPaymentDate']
-    if(outputJSON['data']['createExpense']['expenseDueDate'] != ''):
+
+    if(outputJSON['data']['createExpense']['expenseDueDate']):
         resultString += '\n Due Date : ' + \
             outputJSON['data']['createExpense']['expenseDueDate']
-    resultString += ( '\n Recurring : ' + \
-        'Yes' if(outputJSON['data']
-                 ['createExpense']['recurring'] == True) else 'No')
+
+    resultString += ('\n Recurring : ' +
+                     'Yes' if(outputJSON['data']
+                              ['createExpense']['recurring'] == True) else 'No')
     resultString += '\n Frequency : ' + \
         outputJSON['data']['createExpense']['expenseRecurrence']['frequency']
     resultString += '\n Category : ' + \
@@ -200,14 +203,15 @@ def buildResultText(outputJSON):
     tagString = ','.join(
         map(str, outputJSON['data']['createExpense']['expenseTags']))
     resultString += '\n Tags : ' + tagString
+    
     outputUsers = ''
     userList = (outputJSON['data']['createExpense']['notifyUsers'])
     for userMeta in userList:
         names = userMeta['userMeta']
         for name in names:
-            outputUsers += (names[name] + ', ')
+            outputUsers += (' '+names[name] + ',')
 
-    resultString += '\n Users Notified: ' + outputUsers
+    resultString += ('\n Users Notified: ' + outputUsers[:-1])
 
     return resultString
 
@@ -362,37 +366,6 @@ def send_nlp_response():
                     oldValue.DueDate = oldValue.paymentDate - \
                         timedelta(days=(oldValue.paymentDate.day-1))
 
-    result = 'Great! Your expense was added successfully ✅ \n\n'
-    if(oldValue.Amount != '0'):
-        result += 'Amount : ' + \
-            str(oldValue.currency) + ' ' + str(oldValue.Amount) + ' \n  \n'
-
-    result += 'Entities : ' + oldValue.entitySend + ' \n  \n'
-    result += 'ExpenseType: ' + oldValue.ExpenseType + ' \n  \n'
-    if('Rent' in oldValue.ExpenseType):
-        result += 'Recurrence : ' + oldValue.recurrence + ' \n  \n'
-        if('Yes' in oldValue.recurrence):
-            result += 'Frequency : ' + oldValue.frequency + ' \n  \n'
-
-    result += 'Payment Status : ' + oldValue.paymentStatus + ' \n  \n'
-
-    if(oldValue.paymentStatus == 'Paid'):
-        try:
-            result += 'Payment Date : ' + \
-                oldValue.paymentDate.strftime(r"%b %d %Y ") + ' \n  \n'
-        except:
-            print('No date yet')
-        try:
-            result += 'Due Date : ' + \
-                oldValue.DueDate.strftime(r"%b %d %Y ") + ' \n  \n'
-        except:
-            print('No Due Date')
-
-    result += 'Payment Category : ' + oldValue.category + ' \n  \n'
-    tagString = ','.join(map(str, oldValue.tags))
-    tagString = re.sub('_', ' ', tagString)
-    result += 'Tags : ' + ' ' + tagString.lower() + ' \n  \n'
-
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()
     pprint(vars(oldValue))
@@ -426,6 +399,7 @@ def send_nlp_response():
 
         headers = {'Content-Type': 'application/json'}
         print(payload)
+        result = 'Sorry, we were unable to add your expense to our server.'
 
         try:
             response = requests.request(
@@ -438,11 +412,11 @@ def send_nlp_response():
                     str(outputJSON['data']['createExpense']['id'])
 
                 result = OutputURL + buildResultText(outputJSON)
-                # build result here
 
         except Exception as e:
             print('API Failed')
             print(e)
+            result = 'Sorry, we were unable to add your expense to our server.'
         oldValue.clearIt()
 
     elif 'Amount' in oldValue.emptyList():

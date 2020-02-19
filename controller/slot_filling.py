@@ -175,36 +175,36 @@ def receiveTags(text):
 
 
 def buildResultText(outputJSON):
-    resultString = '\n Description: ' + \
+    resultString = '\n Here\'s a summary: \n \n *Description:* ' + \
         outputJSON['data']['createExpense']['title']
-    resultString += '\n Amount: ' + \
+    resultString += '\n *Amount:* ' + \
         outputJSON['data']['createExpense']['currency'] + \
         ' ' + str(outputJSON['data']['createExpense']['amount'])
-    resultString += '\n Payment Status : ' + \
+    resultString += '\n *Payment Status* : ' + \
         outputJSON['data']['createExpense']['paymentStatus']
 
     if(outputJSON['data']['createExpense']['finalPaymentDate']):
-        resultString += '\n Date of Expense Paid : ' + \
+        resultString += '\n *Date of Expense Paid* : ' + \
             outputJSON['data']['createExpense']['finalPaymentDate']
 
     if(outputJSON['data']['createExpense']['expenseDueDate']):
-        resultString += '\n Due Date : ' + \
+        resultString += '\n *Due Date* : ' + \
             outputJSON['data']['createExpense']['expenseDueDate']
 
-     recurringString = 'Yes' #if(
-    #     outputJSON['data']['createExpense']['recurring'] == True) else 'No'
-    # resultString += '\n Recurring : ' + \
-    #     outputJSON['data']['createExpense']['recurring']
+    recurringString = 'Yes' if(
+        str(outputJSON['data']['createExpense']['recurring']).lower() == 'true') else 'No'
+    resultString += '\n Recurring : ' + \
+        outputJSON['data']['createExpense']['recurring']
 
     if(outputJSON['data']['createExpense']['expenseRecurrence']['frequency'] != ''):
-        resultString += '\n Frequency : ' + \
+        resultString += '\n *Frequency* : ' + \
             outputJSON['data']['createExpense']['expenseRecurrence']['frequency']
 
-    resultString += '\n Category : ' + \
+    resultString += '\n *Category* : ' + \
         outputJSON['data']['createExpense']['accountingHead']['displayName']
     tagString = ','.join(
         map(str, outputJSON['data']['createExpense']['expenseTags']))
-    resultString += '\n Tags : ' + tagString
+    resultString += '\n *Tags* : ' + tagString
 
     outputUsers = ''
     userList = (outputJSON['data']['createExpense']['notifyUsers'])
@@ -213,7 +213,7 @@ def buildResultText(outputJSON):
         for name in names:
             outputUsers += (' '+names[name] + ',')
 
-    resultString += ('\n Users Notified: ' + outputUsers[:-1])
+    resultString += ('\n *Users Notified*: ' + outputUsers[:-1])
 
     return resultString
 
@@ -391,7 +391,8 @@ def send_nlp_response():
         result = 'Sorry, we were unable to add your expense to our server. Please restart the conversation. '
 
         try:
-            response = requests.request("POST", url, headers=headers, data=json.dumps(payload))
+            response = requests.request(
+                "POST", url, headers=headers, data=json.dumps(payload))
             # print(response)
             OutputURL = 'Great! Your expense was added successfully ✅ \n  https://ajency-qa.toppeq.com/cashflow/outflow/planned#/db_'
             outputJSON = response.json()

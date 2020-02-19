@@ -203,7 +203,7 @@ def buildResultText(outputJSON):
     tagString = ','.join(
         map(str, outputJSON['data']['createExpense']['expenseTags']))
     resultString += '\n Tags : ' + tagString
-    
+
     outputUsers = ''
     userList = (outputJSON['data']['createExpense']['notifyUsers'])
     for userMeta in userList:
@@ -322,7 +322,7 @@ def send_nlp_response():
             oldValue.frequency = "Monthly"
 
     # Check if Dialogflow had picked up a date (18th, last wednesday)
-    if(oldValue.askFor == 'Date'):
+    if(oldValue.askFor == 'Date' or oldValue.askFor == 'None'):
         oldValue.paymentDate = dateparser.parse(str(filteredText))
         if(oldValue.paymentDate == None):
             print('failed to parse data')

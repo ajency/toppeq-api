@@ -27,7 +27,7 @@ client = dialogflow_v2.SessionsClient()
 session = client.session_path('classify-intents-ujpxuu', '1234abcdpqrs')
 
 client1 = language_v1.LanguageServiceClient()
-defaultCurrency = 'INR'
+defaultCurrency = 'USD'
 
 
 class lastEntry():
@@ -37,7 +37,6 @@ class lastEntry():
     recurrence = "No"
     frequency = ""
     paymentDate = ''
-    DueDate = ""
     paymentStatus = 'Pending'
     Description = ''
     currency = defaultCurrency
@@ -65,7 +64,6 @@ class lastEntry():
         self.recurrence = "No"
         self.frequency = ""
         self.paymentDate = ''
-        self.DueDate = ""
         self.paymentStatus = 'Unpaid'
         self.Description = ''
         self.currency = defaultCurrency
@@ -261,9 +259,6 @@ def send_nlp_response():
     # For date
         if ("DATE" in enums.Entity.Type(entity.type).name):
             oldValue.paymentDate = dateparser.parse(entity.name)
-            if(oldValue.DueDate == "" and oldValue.recurrence == "Yes"):
-                oldValue.DueDate = oldValue.paymentDate - \
-                    timedelta(days=(oldValue.paymentDate.day-1))
 
     oldValue.fullEntity = changeVar
 
@@ -332,9 +327,6 @@ def send_nlp_response():
         if(req.get('queryResult').get('parameters').get('date')):
             oldValue.paymentDate = dateparser.parse(
                 str(req.get('queryResult').get('parameters').get('date')))
-            if(oldValue.recurrence == "Yes"):
-                oldValue.DueDate = oldValue.paymentDate - \
-                    timedelta(days=(oldValue.paymentDate.day-1))
 
             if(str(int(float(oldValue.Amount))) in str(req.get('queryResult').get('parameters').get('date'))):
                 oldValue.Amount = '0'
@@ -345,9 +337,6 @@ def send_nlp_response():
                 if(req.get('queryResult').get('parameters').get('date-period').get('endDate')):
                     oldValue.paymentDate = dateparser.parse(
                         req.get('queryResult').get('parameters').get('date-period').get('endDate'))
-                if(oldValue.recurrence == "Yes"):
-                    oldValue.DueDate = oldValue.paymentDate - \
-                        timedelta(days=(oldValue.paymentDate.day-1))
 
                 # If the number caught by amount is in date, negate that.
                 if(str(int(float(oldValue.Amount))) in str(req.get('queryResult').get('parameters').get('date'))):
@@ -361,10 +350,6 @@ def send_nlp_response():
         # 3 = enum for Past
         if(token.part_of_speech.tense == 3):
             oldValue.paymentStatus = "Paid"
-            if(oldValue.ExpenseType == "Rent/Subscription"):
-                if(oldValue.paymentDate != ''):
-                    oldValue.DueDate = oldValue.paymentDate - \
-                        timedelta(days=(oldValue.paymentDate.day-1))
 
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()
@@ -372,8 +357,8 @@ def send_nlp_response():
     if 'None' in oldValue.emptyList():
         url = "https://ajency-qa.api.toppeq.com/graphql"
 
-        expduedate = oldValue.DueDate if (
-            oldValue.DueDate) else oldValue.paymentDate
+        dateKey = "finalPaymentDate" if oldValue.paymentStatus == "Paid" else "expenseDueDate"
+        dateValue = oldValue.paymentDate.strftime(r"%Y-%m-%d %H:%M:%S")
         payload = {
             "operationName": "CreateExpense",
             "variables": {
@@ -388,10 +373,9 @@ def send_nlp_response():
                     "sourceDriver": "chatbot",
                     "status": "draft",
                     "expenseRecurrence": {
-                        "frequency": "monthly"
+                        "frequency": oldValue.frequency
                     },
-                    "finalPaymentDate": oldValue.paymentDate.strftime(r"%Y-%m-%d %H:%M:%S") if(oldValue.paymentDate != '') else '',
-                    "expenseDueDate": expduedate.strftime(r"%Y-%m-%d %H:%M:%S") if(expduedate != '') else ''
+                    dateKey: dateValue if(dateValue) else ''
                 }
             },
             "query": "mutation CreateExpense($input: ExpenseInput) {\n createExpense(input: $input) {\n id \n title \n referenceId \n description \n amount \n currency \n expenseDueDate \n finalPaymentDate \n recurring \n referenceId \n paymentStatus \n accountingHead \n{ \n displayName \n} \n notifyUsers \n{ \n userMeta \n{ \n name \n} \n} \n expenseRecurrence \n{ \n frequency \n} \n expenseTags}\n}\n"
@@ -422,7 +406,10 @@ def send_nlp_response():
     elif 'Amount' in oldValue.emptyList():
         result = 'How much was the amount for the transaction?'
     elif 'Date' in oldValue.emptyList():
-        result = 'What is the date of the transaction? '
+        if(oldValue.paymentStatus == "Paid"):
+            result = 'When was the expense done?'
+        else:
+            result = 'When are you planning to do the expense? '
     elif 'Entity' in oldValue.emptyList():
         result = 'What was the transaction done for?'
     elif 'Frequency' in oldValue.emptyList():

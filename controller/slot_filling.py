@@ -389,7 +389,7 @@ def send_nlp_response():
         headers={'Content-Type': 'application/json'}
         print('Before sending API call')
         print(json.dumps(payload))
-        result='Sorry, we were unable to add your expense to our server. Please restart the conversation. '
+        result='Sorry, we could not record this expense on our end. Could you try sending it again?'
 
         try:
             response=requests.request(
@@ -406,7 +406,7 @@ def send_nlp_response():
         except Exception as e:
             print('API Failed')
             print(e)
-            result='Sorry, we were unable to add your expense to our server.'
+            result='Sorry, we could not record this expense on our end. Could you try sending it again?'
         oldValue.clearIt()
 
     elif 'Amount' in oldValue.emptyList():

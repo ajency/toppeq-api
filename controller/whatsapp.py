@@ -28,7 +28,7 @@ def new_text():
     message = client.messages \
         .create(
             from_=request.values.get('To', None),
-            body="Hi there 👋 My name's Expense buddy and I'm here to assist you with recording expenses.  ",
+            body="Hi there 👋\nMy name's Expense buddy and I'm here to assist you with recording expenses. ",
             to=request.values.get('From', None)
         )
     time.sleep(1)
@@ -39,16 +39,7 @@ def help_text():
     message = client.messages \
         .create(
             from_=request.values.get('To', None),
-            body="*To record an expense*, simply try typing in like this \n \n _\"Bought office stationery for $20K.\"_ ",
-            to=request.values.get('From', None)
-        )
-    time.sleep(1)
-
-    print(message.sid)
-    message = client.messages \
-        .create(
-            from_=request.values.get('To', None),
-            body="In case you want to *notify additional users*,  you can do so by adding something like _@john @email_id_ \n Ex.  _\"Bought office stationery for $20K. @john @mike\"_ ",
+            body="To *record an expense*, simply try typing \n \n_\"Bought office stationery for $20K.\"_  \nI will automatically categorize and notify the respective users once you have added your expense.",
             to=request.values.get('From', None)
         )
     time.sleep(1)
@@ -56,7 +47,7 @@ def help_text():
     message = client.messages \
         .create(
             from_=request.values.get('To', None),
-            body="Tip: 💡 Type _\"new\"_ or _\"reset\"_, anytime if you want to start adding a fresh expense. To learn more about adding an expense, simply type _\"help\"_",
+            body="Tip: 💡 Type _\"new\"_ if you want to start adding a fresh expense. \nType _\"help\"_  , if you need help in adding an expense. ",
             to=request.values.get('From', None)
         )
 

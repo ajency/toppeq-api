@@ -75,7 +75,7 @@ class lastEntry():
     def emptyList(self):
         if self.Amount == '0':
             return 'Amount'
-        if self.paymentDate == '' and self.paymentStatus == 'Paid':
+        if self.paymentDate == '':
             return 'Date'
         if self.entitySend == '':
             return 'Entity'
@@ -191,11 +191,14 @@ def buildResultText(outputJSON):
         resultString += '\n Due Date : ' + \
             outputJSON['data']['createExpense']['expenseDueDate']
 
-    resultString += ('\n Recurring : ' +
-                     'Yes' if(outputJSON['data']
-                              ['createExpense']['recurring'] == True) else 'No')
-    resultString += '\n Frequency : ' + \
-        outputJSON['data']['createExpense']['expenseRecurrence']['frequency']
+    recurringString = 'Yes' if(
+        outputJSON['data']['createExpense']['recurring'] == True) else 'No'
+    resultString += '\n Recurring : ' + recurringString
+
+    if(outputJSON['data']['createExpense']['expenseRecurrence']['frequency'] != ''):
+        resultString += '\n Frequency : ' + \
+            outputJSON['data']['createExpense']['expenseRecurrence']['frequency']
+
     resultString += '\n Category : ' + \
         outputJSON['data']['createExpense']['accountingHead']['displayName']
     tagString = ','.join(

@@ -184,7 +184,7 @@ def buildResultText(outputJSON):
         outputJSON['data']['createExpense']['paymentStatus']
 
     if(outputJSON['data']['createExpense']['finalPaymentDate']):
-        resultString += '\n Date of Expense : ' + \
+        resultString += '\n Date of Expense Paid : ' + \
             outputJSON['data']['createExpense']['finalPaymentDate']
 
     if(outputJSON['data']['createExpense']['expenseDueDate']):
@@ -193,7 +193,8 @@ def buildResultText(outputJSON):
 
     recurringString = 'Yes' if(
         outputJSON['data']['createExpense']['recurring'] == True) else 'No'
-    resultString += '\n Recurring : ' + outputJSON['data']['createExpense']['recurring']
+    resultString += '\n Recurring : ' + \
+        outputJSON['data']['createExpense']['recurring']
 
     if(outputJSON['data']['createExpense']['expenseRecurrence']['frequency'] != ''):
         resultString += '\n Frequency : ' + \
@@ -386,7 +387,7 @@ def send_nlp_response():
 
         headers = {'Content-Type': 'application/json'}
         print(payload)
-        result = 'Sorry, we were unable to add your expense to our server.'
+        result = 'Sorry, we were unable to add your expense to our server. Please restart the conversation. '
 
         try:
             response = requests.request(

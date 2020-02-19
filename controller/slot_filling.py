@@ -386,7 +386,7 @@ def send_nlp_response():
         }
 
         headers = {'Content-Type': 'application/json'}
-        print(payload)
+        print(json.dumps(payload))
         result = 'Sorry, we were unable to add your expense to our server. Please restart the conversation. '
 
         try:

@@ -37,7 +37,7 @@ class lastEntry():
     recurrence = "No"
     frequency = ""
     paymentDate = ''
-    paymentStatus = 'Pending'
+    paymentStatus = 'Unpaid'
     Description = ''
     currency = defaultCurrency
     fullEntity = 0
@@ -372,7 +372,7 @@ def send_nlp_response():
                     "description": oldValue.Description,
                     "amount": str(oldValue.Amount),
                     "currency": oldValue.currency,
-                    "recurring": True if('Yes' in oldValue.recurrence) else False,
+                    "recurring": "true" if('Yes' in oldValue.recurrence) else "false",
                     "paymentStatus": oldValue.paymentStatus,
                     "sourceDriver": "chatbot",
                     "status": "draft",

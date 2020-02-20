@@ -255,7 +255,7 @@ def send_nlp_response():
     changeVar = 0
     for entity in response.entities:
         entityDetectList = ["CONSUMER_GOOD", "OTHER", "WORK_OF_ART",
-                            "UNKNOWN", "EVENT", "PERSON", "ORGANIZATION","LOCATION"]
+                            "UNKNOWN", "EVENT", "PERSON", "ORGANIZATION", "LOCATION"]
         # For List of entities
         if any(x in enums.Entity.Type(entity.type).name for x in entityDetectList):
             if((entity.name.title() != 'Subscription' or entity.name.title() != 'Rent' or entity.name.title() != 'Purchase')):
@@ -269,32 +269,33 @@ def send_nlp_response():
     oldValue.fullEntity = changeVar
 
     # Step 3.1: if price is detected by NLP, mark it with currency
-    flag = 0 if(oldValue.Amount == '0') else 1
+    if(oldValue.askFor == 'Amount' or oldValue.askFor == 'None'):
+        flag = 0 if(oldValue.Amount == '0') else 1
 
-    if(oldValue.Amount == '0'):
-        for entity in response.entities:
-            if(enums.Entity.Type(entity.type).name == "PRICE" and flag == 0):
-                oldValue.Amount = float(entity.metadata[u"value"])
-                oldValue.currency = entity.metadata[u"currency"]
-                flag = 1
-
-        # Step 3.3 Check from Dialogflow
-        if(flag == 0):
-            if(req.get('queryResult').get('parameters').get('PRICE')):
-                oldValue.Amount = float(
-                    req.get('queryResult').get('parameters').get('PRICE'))
-                flag = 1
-
-        # Step 3.4 In case nothing is found, pick a number from the list
-        if(flag == 0):
-            maxValue = 0
+        if(oldValue.Amount == '0'):
             for entity in response.entities:
-                if(enums.Entity.Type(entity.type).name == "NUMBER"):
-                    maxValue = float(entity.metadata[u"value"]) if(
-                        int(float(entity.metadata[u"value"])) > int(float(maxValue))) else maxValue
+                if(enums.Entity.Type(entity.type).name == "PRICE" and flag == 0):
+                    oldValue.Amount = float(entity.metadata[u"value"])
+                    oldValue.currency = entity.metadata[u"currency"]
+                    flag = 1
 
-            if(int(maxValue) > 0):
-                oldValue.Amount = maxValue
+            # Step 3.3 Check from Dialogflow
+            if(flag == 0):
+                if(req.get('queryResult').get('parameters').get('PRICE')):
+                    oldValue.Amount = float(
+                        req.get('queryResult').get('parameters').get('PRICE'))
+                    flag = 1
+
+            # Step 3.4 In case nothing is found, pick a number from the list
+            if(flag == 0):
+                maxValue = 0
+                for entity in response.entities:
+                    if(enums.Entity.Type(entity.type).name == "NUMBER"):
+                        maxValue = float(entity.metadata[u"value"]) if(
+                            int(float(entity.metadata[u"value"])) > int(float(maxValue))) else maxValue
+
+                if(int(maxValue) > 0):
+                    oldValue.Amount = maxValue
 
     # Step 3.5 Detect Recurrence
 

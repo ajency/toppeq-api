@@ -262,9 +262,10 @@ def send_nlp_response():
                 if(oldValue.askFor == 'None' or oldValue.askFor == 'Entity'):
                     oldValue.entitySend += (entity.name + ', ')
                     changeVar = 1
-    # For date
-        if ("DATE" in enums.Entity.Type(entity.type).name):
-            oldValue.paymentDate = dateparser.parse(entity.name)
+        # For date
+        if(oldValue.askFor == 'Date' or oldValue.askFor == 'None'):
+            if ("DATE" in enums.Entity.Type(entity.type).name):
+                oldValue.paymentDate = dateparser.parse(entity.name)
 
     oldValue.fullEntity = changeVar
 

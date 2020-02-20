@@ -326,17 +326,13 @@ def send_nlp_response():
 
     # Check if Dialogflow had picked up a date (18th, last wednesday)
     if(oldValue.askFor == 'Date' or oldValue.askFor == 'None'):
-        oldValue.paymentDate = dateparser.parse(str(filteredText))
-        if(oldValue.paymentDate == None):
-            print('failed to parse data')
-            oldValue.paymentDate = ''
 
         if(oldValue.paymentDate == ''):
             if(req.get('queryResult').get('parameters').get('date')):
                 oldValue.paymentDate = dateparser.parse(
                     str(req.get('queryResult').get('parameters').get('date')))
 
-                if(str(int(float(oldValue.Amount))) in str(req.get('queryResult').get('parameters').get('date'))):
+                if(str(int(float(oldValue.Amount))) in str(req.get('queryResult').get('parameters').get('date')) and oldValue.askFor == 'None'):
                     oldValue.Amount = '0'
 
             # Check if Dialogflow had picked up a date (this month, next june, last year)
@@ -347,7 +343,7 @@ def send_nlp_response():
                             req.get('queryResult').get('parameters').get('date-period').get('endDate'))
 
                     # If the number caught by amount is in date, negate that.
-                    if(str(int(float(oldValue.Amount))) in str(req.get('queryResult').get('parameters').get('date'))):
+                    if(str(int(float(oldValue.Amount))) in str(req.get('queryResult').get('parameters').get('date')) and oldValue.askFor == 'None'):
                         oldValue.Amount = '0'
 
             except:

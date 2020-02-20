@@ -17,6 +17,7 @@ from text2digits import text2digits
 from datetime import datetime, date, time, timedelta
 from pprint import pprint
 from controller.accounting_head import sendResponse, getTags
+from controller.messages import *
 from datetime import datetime
 
 slot_fill = Blueprint('slot_fill', __name__)
@@ -409,14 +410,11 @@ def send_nlp_response():
         oldValue.clearIt()
 
     elif 'Amount' in oldValue.emptyList():
-        result = 'How much was the amount for the transaction?'
+        result = amountMessage(oldValue.paymentStatus)
     elif 'Date' in oldValue.emptyList():
-        if(oldValue.paymentStatus == "Paid"):
-            result = 'When was the expense done?'
-        else:
-            result = 'When are you planning to do the expense? '
+        result = dateMessage(oldValue.paymentStatus)
     elif 'Entity' in oldValue.emptyList():
-        result = 'What was the transaction done for?'
+        result = entityMessage(oldValue.paymentStatus)
     elif 'Frequency' in oldValue.emptyList():
-        result = 'How freqently you want the transaction to repeat? \n (Yearly, Monthly, Weekly)'
+        result = frequencyMessage()
     return {'fulfillmentText':  result}

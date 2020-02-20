@@ -23,17 +23,6 @@ auth_token = str(obj['key'])
 whatsapp_call = Blueprint('whatsapp', __name__)
 
 
-def new_text():
-    client = Client(account_sid, auth_token)
-    message = client.messages \
-        .create(
-            from_=request.values.get('To', None),
-            body="Hi there 👋\nMy name's Expense buddy and I'm here to assist you with recording expenses. ",
-            to=request.values.get('From', None)
-        )
-    time.sleep(1)
-
-
 def help_text():
     client = Client(account_sid, auth_token)
     message = client.messages \
@@ -44,6 +33,18 @@ def help_text():
         )
     time.sleep(1)
 
+
+def new_text():
+    client = Client(account_sid, auth_token)
+    message = client.messages \
+        .create(
+            from_=request.values.get('To', None),
+            body="Hi there 👋\nMy name's Expense buddy and I'm here to assist you with recording expenses. ",
+            to=request.values.get('From', None)
+        )
+    time.sleep(1)
+
+    help_text()
     message = client.messages \
         .create(
             from_=request.values.get('To', None),
@@ -67,7 +68,7 @@ def incoming_sms():
         'expenseslot-lbtasi', '1234abcdd')
 
     text_input = dialogflow_v2.types.TextInput(
-        text=body, language_code="en")
+        text=body.title(), language_code="en")
 
     query_input = dialogflow_v2.types.QueryInput(text=text_input)
     response = client.detect_intent(
@@ -86,7 +87,8 @@ def incoming_sms():
         resp = ''
         if(outputIntent == 'Default Welcome Intent'):
             new_text()
-        help_text()
+        else:
+            help_text()
     return str(resp)
 
 

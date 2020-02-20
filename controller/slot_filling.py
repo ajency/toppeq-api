@@ -330,27 +330,27 @@ def send_nlp_response():
             print('failed to parse data')
             oldValue.paymentDate = ''
 
-    if(oldValue.paymentDate == ''):
-        if(req.get('queryResult').get('parameters').get('date')):
-            oldValue.paymentDate = dateparser.parse(
-                str(req.get('queryResult').get('parameters').get('date')))
+        if(oldValue.paymentDate == ''):
+            if(req.get('queryResult').get('parameters').get('date')):
+                oldValue.paymentDate = dateparser.parse(
+                    str(req.get('queryResult').get('parameters').get('date')))
 
-            if(str(int(float(oldValue.Amount))) in str(req.get('queryResult').get('parameters').get('date'))):
-                oldValue.Amount = '0'
-
-        # Check if Dialogflow had picked up a date (this month, next june, last year)
-        try:
-            if(req.get('queryResult').get('parameters').get('date-period') != ''):
-                if(req.get('queryResult').get('parameters').get('date-period').get('endDate')):
-                    oldValue.paymentDate = dateparser.parse(
-                        req.get('queryResult').get('parameters').get('date-period').get('endDate'))
-
-                # If the number caught by amount is in date, negate that.
                 if(str(int(float(oldValue.Amount))) in str(req.get('queryResult').get('parameters').get('date'))):
                     oldValue.Amount = '0'
 
-        except:
-            print('Date Error')
+            # Check if Dialogflow had picked up a date (this month, next june, last year)
+            try:
+                if(req.get('queryResult').get('parameters').get('date-period') != ''):
+                    if(req.get('queryResult').get('parameters').get('date-period').get('endDate')):
+                        oldValue.paymentDate = dateparser.parse(
+                            req.get('queryResult').get('parameters').get('date-period').get('endDate'))
+
+                    # If the number caught by amount is in date, negate that.
+                    if(str(int(float(oldValue.Amount))) in str(req.get('queryResult').get('parameters').get('date'))):
+                        oldValue.Amount = '0'
+
+            except:
+                print('Date Error')
 
     # Detect Tense for Paid/Unpaid
     for token in response.tokens:

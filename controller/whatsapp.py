@@ -47,7 +47,7 @@ def help_text():
     message = client.messages \
         .create(
             from_=request.values.get('To', None),
-            body="Tip: 💡 Type _\"new\"_ if you want to start adding a fresh expense. \nType _\"help\"_  , if you need help in adding an expense. ",
+            body="Tip: 💡 Type _\"new\"_ if you want to start adding a fresh expense. \nType _\"help\"_ , if you need help in adding an expense. ",
             to=request.values.get('From', None)
         )
 

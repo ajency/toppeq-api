@@ -7,7 +7,7 @@ import json
 import dialogflow_v2
 from dialogflow_v2 import types
 from twilio.rest import Client
-
+from controller.messages import *
 from google.cloud import language_v1, language
 from google.cloud.language_v1 import enums, types
 from google.oauth2.service_account import Credentials
@@ -28,7 +28,7 @@ def help_text():
     message = client.messages \
         .create(
             from_=request.values.get('To', None),
-            body="To *record an expense*, simply try typing \n \n_\"Bought office stationery for $20K.\"_  \nI will automatically categorize and notify the respective users once you have added your expense.",
+            body=getBotReplyText('help'),
             to=request.values.get('From', None)
         )
     time.sleep(1)
@@ -39,7 +39,7 @@ def new_text():
     message = client.messages \
         .create(
             from_=request.values.get('To', None),
-            body="Hi there 👋\nMy name's Expense buddy and I'm here to assist you with recording expenses. ",
+            body=getBotReplyText('welcome'),
             to=request.values.get('From', None)
         )
     time.sleep(1)
@@ -48,7 +48,7 @@ def new_text():
     message = client.messages \
         .create(
             from_=request.values.get('To', None),
-            body="Tip: 💡 Type _\"new\"_ if you want to start adding a fresh expense. \nType _\"help\"_ , if you need help in adding an expense. ",
+            body=getBotReplyText('tip'),
             to=request.values.get('From', None)
         )
 

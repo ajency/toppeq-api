@@ -389,7 +389,7 @@ def send_nlp_response():
         headers = {'Content-Type': 'application/json'}
         print('Before sending API call')
         print(json.dumps(payload))
-        result = 'Sorry, we could not record this expense on our end. Could you try sending it again?'
+        result = getBotReplyText('server_error')
 
         try:
             response = requests.request(
@@ -406,15 +406,18 @@ def send_nlp_response():
         except Exception as e:
             print('API Failed')
             print(e)
-            result = 'Sorry, we could not record this expense on our end. Could you try sending it again?'
+            result = getBotReplyText('server_error')
         oldValue.clearIt()
 
     elif 'Amount' in oldValue.emptyList():
-        result = amountMessage(oldValue.paymentStatus)
+        result = getBotReplyText(
+            'missing_amount_question', oldValue.paymentStatus)
     elif 'Date' in oldValue.emptyList():
-        result = dateMessage(oldValue.paymentStatus)
+        result = getBotReplyText(
+            'missing_date_question', oldValue.paymentStatus)
     elif 'Entity' in oldValue.emptyList():
-        result = entityMessage(oldValue.paymentStatus)
+        result = getBotReplyText(
+            'missing_entity_question', oldValue.paymentStatus)
     elif 'Frequency' in oldValue.emptyList():
-        result = frequencyMessage()
+        result = getBotReplyText('missing_frequency_question')
     return {'fulfillmentText':  result}

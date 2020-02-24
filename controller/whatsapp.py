@@ -8,17 +8,18 @@ import dialogflow_v2
 from dialogflow_v2 import types
 from twilio.rest import Client
 from controller.messages import *
+from controller.credantials import *
 from google.cloud import language_v1, language
 from google.cloud.language_v1 import enums, types
 from google.oauth2.service_account import Credentials
+from sqlalchemy import create_engine, MetaData, Table, Column, select
 
-account_sid = 'AC797feaab84bdd385bbb2ae0f1c08e8b6'
+engine = create_engine(serverUrl())
 
-with open('../twiliokey.json', 'r') as jsonfile:
-    data = jsonfile.read()
-
-obj = json.loads(data)
-auth_token = str(obj['key'])
+connection = engine.connect()
+metadata = MetaData()
+twilioKey = Table('whatsapp_company_twilio_accounts', metadata,
+                  autoload=True, autoload_with=engine)
 
 whatsapp_call = Blueprint('whatsapp', __name__)
 
@@ -56,6 +57,16 @@ def new_text():
 @whatsapp_call.route("/sms", methods=['GET', 'POST'])
 def incoming_sms():
     # Get the message the user sent our Twilio number
+    account_sid = request.values.get('AccountSid', None)
+
+    query = select([twilioKey.columns.auth_token]).where(twilioKey.columns.account_sid ==
+                                                         account_sid)
+    #
+    ResultProxy = connection.execute(query)
+
+    ResultSet = ResultProxy.fetchone()
+    auth_token = ResultSet[0]
+
     print(vars(request.values))
     body = request.values.get('Body', None)
     incoming_text = body

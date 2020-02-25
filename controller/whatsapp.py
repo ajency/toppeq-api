@@ -15,7 +15,7 @@ from google.oauth2.service_account import Credentials
 from datetime import date
 from sqlalchemy import create_engine, MetaData, Table, Column, select, insert, and_, update
 
-engine = create_engine(serverUrl(''))
+engine = create_engine(serverUrl())
 connection = engine.connect()
 metadata = MetaData()
 twilioKey = Table('whatsapp_company_twilio_accounts', metadata,
@@ -28,34 +28,31 @@ sessionVariable = Table('whatsapp_user_active_sessions', metadata,
 whatsapp_call = Blueprint('whatsapp', __name__)
 
 
-def help_text():
+def help_text(account_sid, auth_token):
     client = Client(account_sid, auth_token)
-    message = client.messages \
-        .create(
-            from_=request.values.get('To', None),
-            body=getBotReplyText('help'),
-            to=request.values.get('From', None)
-        )
+    message = client.messages.create(
+        from_=request.values.get('To', None),
+        body=getBotReplyText('help'),
+        to=request.values.get('From', None)
+    )
     time.sleep(1)
 
 
-def new_text():
+def new_text(account_sid, auth_token):
     client = Client(account_sid, auth_token)
-    message = client.messages \
-        .create(
-            from_=request.values.get('To', None),
-            body=getBotReplyText('welcome'),
-            to=request.values.get('From', None)
-        )
+    message = client.messages.create(
+        from_=request.values.get('To', None),
+        body=getBotReplyText('welcome'),
+        to=request.values.get('From', None)
+    )
     time.sleep(1)
 
-    help_text()
-    message = client.messages \
-        .create(
-            from_=request.values.get('To', None),
-            body=getBotReplyText('tip'),
-            to=request.values.get('From', None)
-        )
+    help_text(account_sid, auth_token)
+    message = client.messages.create(
+        from_=request.values.get('To', None),
+        body=getBotReplyText('tip'),
+        to=request.values.get('From', None)
+    )
 
 
 @whatsapp_call.route("/sms", methods=['GET', 'POST'])
@@ -91,7 +88,7 @@ def incoming_sms():
         session = ResultSet1[0]
         # update with time
         query = update(sessionVariable).values(last_updated=date.today().strftime(r"%d-%m-%Y")).where(and_(
-        sessionVariable.columns.external_company_id == str(ResultSet[1]), sessionVariable.columns.contact_number == contact))
+            sessionVariable.columns.external_company_id == str(ResultSet[1]), sessionVariable.columns.contact_number == contact))
         # add last updated here
         ResultProxy = connection.execute(query)
 
@@ -124,9 +121,9 @@ def incoming_sms():
     if(response.query_result.fulfillment_text == 'Cleared'):
         resp = ''
         if(outputIntent == 'Default Welcome Intent'):
-            new_text()
+            new_text(account_sid, auth_token)
         else:
-            help_text()
+            help_text(account_sid, auth_token)
     return str(resp)
 
 

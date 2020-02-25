@@ -8,6 +8,7 @@ import time
 import re
 import dateparser
 import dateutil.relativedelta
+import jsonpickle
 
 from flask import Flask, request, make_response, jsonify, session, Blueprint
 from dialogflow_v2 import types
@@ -22,7 +23,7 @@ from controller.credantials import *
 from datetime import datetime
 from sqlalchemy import create_engine, MetaData, Table, Column, select, insert, and_, update
 
-engine = create_engine(serverUrl(''))
+engine = create_engine(serverUrl())
 connection = engine.connect()
 metadata = MetaData()
 twilioKey = Table('whatsapp_company_twilio_accounts', metadata,
@@ -95,9 +96,6 @@ class lastEntry():
             return 'Frequency'
 
         return 'None'
-
-
-oldValue = lastEntry()
 
 
 def removeStopwords(text):
@@ -234,7 +232,7 @@ def buildResultText(outputJSON):
 
 @slot_fill.route('/slotfill/', methods=['GET', 'POST'])
 def send_nlp_response():
-
+    oldValue = lastEntry()
     req = request.get_json(force=True)
     query = select([sessionVariable.columns.session_data]).where(
         sessionVariable.columns.session_id == str(req.get('session')))
@@ -242,15 +240,10 @@ def send_nlp_response():
     ResultProxy1 = connection.execute(query)
     ResultSet1 = ResultProxy1.fetchone()
 
-    if(ResultSet1):
-        #
-        pprint(ResultSet1)
-    else:
-        ResultSet1[0] = json.dumps(oldValue)
-    
+    if(ResultSet1[0]):
+        oldValue = jsonpickle.decode(ResultSet1[0])
 
     inputText = str(req.get('queryResult').get('queryText'))
-    print('session: ', str(req.get('session')))
     if(inputText.lower() == 'reset vars'):
         oldValue.clearIt()
         return {'fulfillmentText':  'Cleared'}
@@ -444,4 +437,10 @@ def send_nlp_response():
             'missing_entity_question', oldValue.paymentStatus)
     elif 'Frequency' in oldValue.emptyList():
         result = getBotReplyText('missing_frequency_question')
+
+    sessionData = None if('None' in oldValue.emptyList()
+                          ) else jsonpickle.encode(oldValue)
+    query = update(sessionVariable).values(session_data=sessionData).where(
+        sessionVariable.columns.session_id == str(req.get('session')))
+    ResultProxy1 = connection.execute(query)
     return {'fulfillmentText':  result}

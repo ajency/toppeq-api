@@ -12,15 +12,18 @@ from controller.credantials import *
 from google.cloud import language_v1, language
 from google.cloud.language_v1 import enums, types
 from google.oauth2.service_account import Credentials
-from sqlalchemy import create_engine, MetaData, Table, Column, select
+from datetime import date
+from sqlalchemy import create_engine, MetaData, Table, Column, select, insert, and_, update
 
-account_sid = 'AC797feaab84bdd385bbb2ae0f1c08e8b6'
+engine = create_engine(serverUrl(''))
+connection = engine.connect()
+metadata = MetaData()
+twilioKey = Table('whatsapp_company_twilio_accounts', metadata,
+                  autoload=True, autoload_with=engine)
 
-with open('../twiliokey.json', 'r') as jsonfile:
-    data = jsonfile.read()
+sessionVariable = Table('whatsapp_user_active_sessions', metadata,
+                        autoload=True, autoload_with=engine)
 
-obj = json.loads(data)
-auth_token = str(obj['key'])
 
 whatsapp_call = Blueprint('whatsapp', __name__)
 
@@ -58,6 +61,14 @@ def new_text():
 @whatsapp_call.route("/sms", methods=['GET', 'POST'])
 def incoming_sms():
     # Get the message the user sent our Twilio number
+    account_sid = request.values.get('AccountSid', None)
+
+    query = select([twilioKey.columns.auth_token, twilioKey.columns.external_company_id]).where(twilioKey.columns.account_sid ==
+                                                                                                account_sid)
+    ResultProxy = connection.execute(query)
+
+    ResultSet = ResultProxy.fetchone()
+    auth_token = ResultSet[0]
 
     print(vars(request.values))
     body = request.values.get('Body', None)
@@ -67,8 +78,32 @@ def incoming_sms():
 
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../expenseslot.json"
     client = dialogflow_v2.SessionsClient()
-    session = client.session_path(
-        'expenseslot-lbtasi', '1234abcdd')
+    # check if the entry exists
+    contact = str(request.values.get('From', None))
+    contact = contact.replace('whatsapp:+', '')
+    query = select([sessionVariable.columns.session_id]).where(and_(
+        sessionVariable.columns.external_company_id == str(ResultSet[1]), sessionVariable.columns.contact_number == contact))
+
+    ResultProxy1 = connection.execute(query)
+    ResultSet1 = ResultProxy1.fetchone()
+
+    if(ResultSet1):
+        session = ResultSet1[0]
+        # update with time
+        query = update(sessionVariable).values(last_updated=date.today().strftime(r"%d-%m-%Y")).where(and_(
+        sessionVariable.columns.external_company_id == str(ResultSet[1]), sessionVariable.columns.contact_number == contact))
+        # add last updated here
+        ResultProxy = connection.execute(query)
+
+    else:
+        session_generation = str(int(time.time())) + str(contact)
+        session = client.session_path(
+            'expenseslot-lbtasi', session_generation)
+
+        query = insert(sessionVariable).values(
+            external_company_id=ResultSet[1], contact_number=contact, session_id=str(session), last_updated=date.today().strftime(r"%d-%m-%Y"))
+        # add last updated here
+        ResultProxy = connection.execute(query)
 
     text_input = dialogflow_v2.types.TextInput(
         text=body.title(), language_code="en")

@@ -42,12 +42,18 @@ def new_text(account_sid, auth_token):
     client = Client(account_sid, auth_token)
     message = client.messages.create(
         from_=request.values.get('To', None),
-        body=getBotReplyText('welcome'),
+        body=getBotReplyText('welcome_1'),
         to=request.values.get('From', None)
     )
     time.sleep(1)
 
-    help_text(account_sid, auth_token)
+    message = client.messages.create(
+        from_=request.values.get('To', None),
+        body=getBotReplyText('welcome_2'),
+        to=request.values.get('From', None)
+    )
+    time.sleep(1)
+
     message = client.messages.create(
         from_=request.values.get('To', None),
         body=getBotReplyText('tip'),

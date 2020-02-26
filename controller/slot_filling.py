@@ -19,11 +19,13 @@ from datetime import datetime, date, time, timedelta
 from pprint import pprint
 from controller.accounting_head import sendResponse, getTags
 from controller.messages import *
-from controller.credantials import *
 from datetime import datetime
 from sqlalchemy import create_engine, MetaData, Table, Column, select, insert, and_, update
+from dotenv import load_dotenv, find_dotenv
 
-engine = create_engine(serverUrl())
+load_dotenv(find_dotenv())
+
+engine = create_engine(os.getenv('SQLALCHEMY_SERVER_URL'))
 connection = engine.connect()
 metadata = MetaData()
 twilioKey = Table('whatsapp_company_twilio_accounts', metadata,
@@ -34,10 +36,12 @@ sessionVariable = Table('whatsapp_user_active_sessions', metadata,
 
 slot_fill = Blueprint('slot_fill', __name__)
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../intent.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv(
+    'SLOT_DIALOGFLOW_LOCATION')
 
 client = dialogflow_v2.SessionsClient()
-session = client.session_path('classify-intents-ujpxuu', '1234abcdpqrs')
+session = client.session_path(
+    os.getenv('SLOT_DIALOGFLOW_PROJECT_ID'), '1234abcdpqrs')
 
 client1 = language_v1.LanguageServiceClient()
 defaultCurrency = 'USD'

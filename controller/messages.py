@@ -1,27 +1,27 @@
 def amountMessage(status):
     if(status == "Paid"):
-        return 'How much was the amount for the expense?'
+        return 'What was the amount spent?'
     else:
         return 'How much is the amount for the expense?'
 
 
 def dateMessage(status):
     if(status == "Paid"):
-        return 'When was the expense done?'
+        return 'Can you tell me the date when this expense was done?'
     else:
-        return 'When are you planning to do the expense? '
+        return 'Can you tell me the due date of this expense?'
 
 
 def entityMessage(status):
     if(status == "Paid"):
-        return 'What was the expense done for?'
+        return 'For what was this expense made?'
     else:
-        return 'What is the expense done for?'
+        return 'For what is this expense made?'
     return
 
 
 def frequencyMessage():
-    return 'How freqently you want the transaction to repeat? \n (Yearly, Monthly, Weekly)'
+    return 'How frequently would this expense repeat?  \n(Yearly, Monthly, Weekly, Daily)'
 
 
 def getBotReplyText(textType, options='none'):

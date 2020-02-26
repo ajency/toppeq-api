@@ -87,7 +87,7 @@ def incoming_sms():
     if(ResultSet1):
         session = ResultSet1[0]
         # update with time
-        query = update(sessionVariable).values(last_updated=date.today().strftime(r"%d-%m-%Y")).where(and_(
+        query = update(sessionVariable).values(last_updated=date.today().strftime(r"%m-%d-%Y")).where(and_(
             sessionVariable.columns.external_company_id == str(ResultSet[1]), sessionVariable.columns.contact_number == contact))
         # add last updated here
         ResultProxy = connection.execute(query)
@@ -98,7 +98,7 @@ def incoming_sms():
             'expenseslot-lbtasi', session_generation)
 
         query = insert(sessionVariable).values(
-            external_company_id=ResultSet[1], contact_number=contact, session_id=str(session), last_updated=date.today().strftime(r"%d-%m-%Y"))
+            external_company_id=ResultSet[1], contact_number=contact, session_id=str(session), last_updated=date.today().strftime(r"%m-%d-%Y"))
         # add last updated here
         ResultProxy = connection.execute(query)
 

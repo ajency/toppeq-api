@@ -29,6 +29,8 @@ sessionVariable = Table('whatsapp_user_active_sessions', metadata,
 
 whatsapp_call = Blueprint('whatsapp', __name__)
 
+# Writes a Help Text Message to Whatsapp
+
 
 def help_text(account_sid, auth_token):
     client = Client(account_sid, auth_token)
@@ -38,6 +40,8 @@ def help_text(account_sid, auth_token):
         to=request.values.get('From', None)
     )
     time.sleep(1)
+
+# Writes a Welcome Text Message to Whatsapp
 
 
 def new_text(account_sid, auth_token):
@@ -62,7 +66,7 @@ def new_text(account_sid, auth_token):
         to=request.values.get('From', None)
     )
 
-
+# Reads Input from Whatsapp and Sends it through Dialogflow and returns the response
 @whatsapp_call.route("/sms", methods=['GET', 'POST'])
 def incoming_sms():
 
@@ -129,7 +133,7 @@ def incoming_sms():
             help_text(account_sid, auth_token)
     return str(resp)
 
-
+# Prints Status of the Webhook when it receives the whatsapp message
 @whatsapp_call.route("/status", methods=['GET', 'POST'])
 def incoming_status():
 

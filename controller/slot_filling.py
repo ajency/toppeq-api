@@ -9,6 +9,8 @@ import re
 import dateparser
 import dateutil.relativedelta
 import jsonpickle
+import random
+import string
 
 from flask import Flask, request, make_response, jsonify, session, Blueprint
 from dialogflow_v2 import types
@@ -16,7 +18,6 @@ from google.cloud import language_v1, language
 from google.cloud.language_v1 import enums, types
 from text2digits import text2digits
 from datetime import datetime, date, time, timedelta
-from pprint import pprint
 from controller.accounting_head import sendResponse, getTags
 from controller.messages import *
 from datetime import datetime
@@ -40,11 +41,15 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv(
     'SLOT_DIALOGFLOW_LOCATION')
 
 client = dialogflow_v2.SessionsClient()
+letters = string.ascii_letters
+sessionID = ''.join(random.choice(letters) for i in range(10))
 session = client.session_path(
-    os.getenv('SLOT_DIALOGFLOW_PROJECT_ID'), '1234abcdpqrs')
+    os.getenv('SLOT_DIALOGFLOW_PROJECT_ID'), sessionID)
 
-client1 = language_v1.LanguageServiceClient()
+client = language_v1.LanguageServiceClient()
 defaultCurrency = 'USD'
+
+# Defines a class to store variables
 
 
 class lastEntry():
@@ -101,21 +106,24 @@ class lastEntry():
 
         return 'None'
 
+# removes stopwords from the text
+
 
 def removeStopwords(text):
-    # removes stopwords from the text
+
     stopWords = ["and "]
     big_regex = re.compile(r'\b%s\b' %
                            r'\b|\b'.join(map(re.escape, stopWords)))
     return big_regex.sub("", text)
 
+# converts words to numbers and convert lakh to numbers
+
 
 def convertWordstoNum(text):
-    # converts words to numbers
+
     t2d = text2digits.Text2Digits()
     convertedText = t2d.convert(text)
 
-    # convert lakh to numbers
     secondConvertedText = re.sub(
         r'(?P<money>[0-9]+)( |)l ', r'\g<money>00000 ', convertedText.lower())
     thirdConvertedText = re.sub(
@@ -123,6 +131,7 @@ def convertWordstoNum(text):
     return re.sub(r'(?P<money>[0-9]+)( |)cr ', r'\g<money>0000000 ', thirdConvertedText)
 
 
+# Removes consecutive spaces in between two numbers
 def removeConsecutiveSpaces(text):
 
     value = re.sub(
@@ -135,6 +144,8 @@ def removeConsecutiveSpaces(text):
 
     return value
 
+# Returns text in lowercase and transforms rs to rupees
+
 
 def lowerCaps(text):
     if(not 'Rs.' in text.title()):
@@ -143,10 +154,14 @@ def lowerCaps(text):
     return re.sub(
         r'(\d+(?P<ordinal>[A-z])+)', lambda m: m.group(0).lower(), text+' ')
 
+# uses all functions above to filter text for input
+
 
 def filterResults(text):
     op = removeConsecutiveSpaces(convertWordstoNum(removeStopwords(text)))
     return lowerCaps(op)
+
+# maps accounting head to the number to be sent to db
 
 
 def mapAChead(acHead):
@@ -168,13 +183,17 @@ def mapAChead(acHead):
     if (AcHeadMap[acHead]):
         return AcHeadMap[acHead]
     else:
-        return 15
+        return AcHeadMap["others"]
+
+# gets accounting head from the  accountingHead page
 
 
 def getACHead(text):
     output = json.loads(json.dumps(sendResponse(
         json.loads(json.dumps(text)))))['accountHead']
     return output.replace('_', " ").title()
+
+# gets tags from accountingHead page
 
 
 def receiveTags(text):
@@ -186,6 +205,8 @@ def receiveTags(text):
         for string in tempList:
             oldValue.tags.append(string.title())
     return ''
+
+# Generates whatsapp output in a specified format to be sent
 
 
 def buildResultText(outputJSON):
@@ -233,7 +254,7 @@ def buildResultText(outputJSON):
 
     return resultString
 
-
+# Webhook function to return response  to Twilio webhook
 @slot_fill.route('/slotfill/', methods=['GET', 'POST'])
 def send_nlp_response():
     oldValue = lastEntry()
@@ -241,11 +262,11 @@ def send_nlp_response():
     query = select([sessionVariable.columns.session_data]).where(
         sessionVariable.columns.session_id == str(req.get('session')))
 
-    ResultProxy1 = connection.execute(query)
-    ResultSet1 = ResultProxy1.fetchone()
+    ResultProxy = connection.execute(query)
+    ResultSet = ResultProxy.fetchone()
 
-    if(ResultSet1[0]):
-        oldValue = jsonpickle.decode(ResultSet1[0])
+    if(ResultSet[0]):
+        oldValue = jsonpickle.decode(ResultSet[0])
 
     inputText = str(req.get('queryResult').get('queryText'))
     if(inputText.lower() == 'reset vars'):
@@ -271,7 +292,7 @@ def send_nlp_response():
         extract_entity_sentiment=False,
         classify_text=False)
 
-    response = client1.annotate_text(document, features)
+    response = client.annotate_text(document, features)
     print('Checking for : '+oldValue.askFor)
 
     changeVar = 0
@@ -379,7 +400,6 @@ def send_nlp_response():
 
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()
-    pprint(vars(oldValue))
     if 'None' in oldValue.emptyList():
         url = "https://ajency-qa.api.toppeq.com/graphql"
 
@@ -415,7 +435,6 @@ def send_nlp_response():
         try:
             response = requests.request(
                 "POST", url, headers=headers, data=json.dumps(payload))
-            # print(response)
             OutputURL = 'Great! Your expense was added successfully ✅ \n  https://ajency-qa.toppeq.com/cashflow/outflow/planned#/db_'
             outputJSON = response.json()
             if(outputJSON['data']['createExpense']['id']):
@@ -446,5 +465,5 @@ def send_nlp_response():
                           ) else jsonpickle.encode(oldValue)
     query = update(sessionVariable).values(session_data=sessionData).where(
         sessionVariable.columns.session_id == str(req.get('session')))
-    ResultProxy1 = connection.execute(query)
+    ResultProxy = connection.execute(query)
     return {'fulfillmentText':  result}

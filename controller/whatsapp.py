@@ -14,6 +14,11 @@ from google.oauth2.service_account import Credentials
 from datetime import date
 from sqlalchemy import create_engine, MetaData, Table, Column, select, insert, and_, update
 from dotenv import load_dotenv, find_dotenv
+from language import importlanguage
+
+languageText = importlanguage.getLanguage()
+languageText = json.loads(json.dumps(languageText))
+
 
 load_dotenv(find_dotenv())
 
@@ -78,11 +83,12 @@ def incoming_sms():
 
     ResultSet = ResultProxy.fetchone()
     auth_token = ResultSet[0]
+    externalCompanyId = ResultSet[1]
 
     print(vars(request.values))
     body = request.values.get('Body', None)
     incoming_text = body
-    if(body.lower() == "new" or body.lower() == "reset" or body.lower() == "help"):
+    if(body.lower() == "new" or body.lower() == "help"):
         body = 'reset vars'
 
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv(
@@ -91,15 +97,16 @@ def incoming_sms():
     contact = str(request.values.get('From', None))
     contact = contact.replace('whatsapp:+', '')
     query = select([sessionVariable.columns.session_id]).where(and_(
-        sessionVariable.columns.external_company_id == str(ResultSet[1]), sessionVariable.columns.contact_number == contact))
+        sessionVariable.columns.external_company_id == str(externalCompanyId), sessionVariable.columns.contact_number == contact))
 
-    ResultProxy1 = connection.execute(query)
-    ResultSet1 = ResultProxy1.fetchone()
+    ResultProxy = connection.execute(query)
+    ResultSet = ResultProxy.fetchone()
 
-    if(ResultSet1):
-        session = ResultSet1[0]
-        query = update(sessionVariable).values(last_updated=date.today().strftime(r"%m-%d-%Y")).where(and_(
-            sessionVariable.columns.external_company_id == str(ResultSet[1]), sessionVariable.columns.contact_number == contact))
+    if(ResultSet):
+        print(ResultSet)
+        session = ResultSet[0]
+        query = update(sessionVariable).values(last_updated=date.today().strftime(r"%d-%m-%Y")).where(and_(
+            sessionVariable.columns.external_company_id == str(externalCompanyId), sessionVariable.columns.contact_number == contact))
         ResultProxy = connection.execute(query)
 
     else:
@@ -108,7 +115,7 @@ def incoming_sms():
             os.getenv('WA_DIALOGFLOW_PROJECT_ID'), session_generation)
 
         query = insert(sessionVariable).values(
-            external_company_id=ResultSet[1], contact_number=contact, session_id=str(session), last_updated=date.today().strftime(r"%m-%d-%Y"))
+            external_company_id=ResultSet[1], contact_number=contact, session_id=str(session), last_updated=date.today().strftime(r"%d-%m-%Y"))
         ResultProxy = connection.execute(query)
 
     text_input = dialogflow_v2.types.TextInput(
@@ -127,7 +134,7 @@ def incoming_sms():
     print(str(resp))
     if(response.query_result.fulfillment_text == 'Cleared'):
         resp = ''
-        if(outputIntent == 'Default Welcome Intent'):
+        if(outputIntent == languageText['welcomeIntentText']):
             new_text(account_sid, auth_token)
         else:
             help_text(account_sid, auth_token)
@@ -136,6 +143,5 @@ def incoming_sms():
 # Prints Status of the Webhook when it receives the whatsapp message
 @whatsapp_call.route("/status", methods=['GET', 'POST'])
 def incoming_status():
-
     print(str(request))
     return ''

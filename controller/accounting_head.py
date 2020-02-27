@@ -6,7 +6,8 @@ import json
 import re
 import dialogflow_v2
 from dialogflow_v2 import types
-
+import random
+import string
 from google.cloud import language_v1, language
 from google.cloud.language_v1 import enums, types
 from datetime import datetime
@@ -18,14 +19,17 @@ from google.oauth2.service_account import Credentials
 
 account_head = Blueprint('account_head', __name__)
 
+letters = string.ascii_letters
+sessionID = ''.join(random.choice(letters) for i in range(10))
+
 
 def sendResponse(JSONObject):
     if(JSONObject):
-        credentials = Credentials.from_service_account_file("../intent.json")
+        credentials = Credentials.from_service_account_file(
+            os.getenv('SLOT_DIALOGFLOW_LOCATION'))
         client = dialogflow_v2.SessionsClient(credentials=credentials)
-
         session = client.session_path(
-            'classify-intents-ujpxuu', 'Testing values')
+            os.getenv('SLOT_DIALOGFLOW_PROJECT_ID'), sessionID)
 
         content = JSONObject
         text_input = dialogflow_v2.types.TextInput(
@@ -59,8 +63,9 @@ def sendResponse(JSONObject):
 def searchTags(inputString):
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../tags.json"
     client = dialogflow_v2.SessionsClient()
+
     session = client.session_path(
-        'slotfilling1-hyalrc', '1234abcdd')
+        'slotfilling1-hyalrc', sessionID)
     text_input = dialogflow_v2.types.TextInput(
         text=inputString, language_code="en")
     query_input = dialogflow_v2.types.QueryInput(text=text_input)
@@ -96,7 +101,8 @@ def getTags(JSONObject):
         listEntityname = []
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            future_intent = {executor.submit(searchTags, entity.name): entity for entity in response.entities}
+            future_intent = {executor.submit(
+                searchTags, entity.name): entity for entity in response.entities}
             for future in concurrent.futures.as_completed(future_intent):
                 output = future_intent[future]
                 try:

@@ -11,6 +11,7 @@ import dateutil.relativedelta
 import jsonpickle
 import random
 import string
+import controller.constants
 
 from flask import Flask, request, make_response, jsonify, session, Blueprint
 from dialogflow_v2 import types
@@ -23,6 +24,10 @@ from controller.messages import *
 from datetime import datetime
 from sqlalchemy import create_engine, MetaData, Table, Column, select, insert, and_, update
 from dotenv import load_dotenv, find_dotenv
+from language import importlanguage
+
+languageText = importlanguage.getLanguage()
+languageText = json.loads(json.dumps(languageText))
 
 load_dotenv(find_dotenv())
 
@@ -166,20 +171,7 @@ def filterResults(text):
 
 def mapAChead(acHead):
     acHead = acHead.replace(' ', '_').lower()
-    AcHeadMap = {
-        "office_expenses": 2,
-        "advertising_and_marketing": 3,
-        "employee_benefits": 5,
-        "professional_fees2": 6,
-        "professional_fees": 1,
-        "education_and_training": 7,
-        "rent": 8,
-        "travel": 9,
-        "bank_charges": 10,
-        "general_and_administrative_expenses": 11,
-        "it_expense": 12,
-        "cost_of_goods_sold": 13,
-        "others": 15}
+    AcHeadMap = constants.AcHeadMap
     if (AcHeadMap[acHead]):
         return AcHeadMap[acHead]
     else:
@@ -210,38 +202,40 @@ def receiveTags(text):
 
 
 def buildResultText(outputJSON):
-    resultString = '\n \nHere\'s a summary: \n \n*Description:* ' + \
+    resultString = languageText['outputSummaryMessage1'] + \
         outputJSON['data']['createExpense']['title']
-    resultString += '\n*Amount:* ' + \
+    resultString += languageText['outputSummaryMessage2'] + \
         outputJSON['data']['createExpense']['currency'] + \
         ' ' + str(outputJSON['data']['createExpense']['amount'])
-    resultString += '\n*Payment Status* : ' + \
+    resultString += languageText['outputSummaryMessage3'] + \
         outputJSON['data']['createExpense']['paymentStatus']
 
     if(outputJSON['data']['createExpense']['finalPaymentDate']):
         displayDate = dateparser.parse(
             str(outputJSON['data']['createExpense']['finalPaymentDate']))
-        resultString += '\n*Date of Expense Paid* : ' + \
+        resultString += languageText['outputSummaryMessage4'] + \
             displayDate.strftime(r"%d %B %Y")
 
     if(outputJSON['data']['createExpense']['expenseDueDate']):
         displayDate = dateparser.parse(
             str(outputJSON['data']['createExpense']['expenseDueDate']))
-        resultString += ('\n*Due Date* : ' + displayDate.strftime(r"%d %B %Y"))
+        resultString += (languageText['outputSummaryMessage5'] +
+                         displayDate.strftime(r"%d %B %Y"))
 
     recurringString = 'Yes' if(
         str(outputJSON['data']['createExpense']['recurring']).lower() == 'true') else 'No'
-    resultString += '\n*Recurring* : ' + recurringString
+    resultString += languageText['outputSummaryMessage6'] + recurringString
 
     if(outputJSON['data']['createExpense']['expenseRecurrence']['frequency'] != ''):
-        resultString += '\n*Frequency* : ' + \
+        resultString += languageText['outputSummaryMessage7'] + \
             outputJSON['data']['createExpense']['expenseRecurrence']['frequency']
 
-    resultString += '\n*Category* : ' + \
+    resultString += languageText['outputSummaryMessage8'] + \
         outputJSON['data']['createExpense']['accountingHead']['displayName']
     tagString = ','.join(
         map(str, outputJSON['data']['createExpense']['expenseTags']))
-    resultString += '\n*Tags* : #' + tagString.replace(',', ', #')
+    resultString += languageText['outputSummaryMessage9'] + \
+        tagString.replace(',', ', #')
 
     outputUsers = ''
     userList = (outputJSON['data']['createExpense']['notifyUsers'])
@@ -250,7 +244,7 @@ def buildResultText(outputJSON):
         for name in names:
             outputUsers += (' '+names[name] + ',')
 
-    resultString += ('\n*Users Notified*: ' + outputUsers[:-1])
+    resultString += (languageText['outputSummaryMessage10'] + outputUsers[:-1])
 
     return resultString
 
@@ -435,7 +429,7 @@ def send_nlp_response():
         try:
             response = requests.request(
                 "POST", url, headers=headers, data=json.dumps(payload))
-            OutputURL = 'Great! Your expense was added successfully ✅ \n  https://ajency-qa.toppeq.com/cashflow/outflow/planned#/db_'
+            OutputURL = languageText['successWhatsappMessage']
             outputJSON = response.json()
             if(outputJSON['data']['createExpense']['id']):
                 OutputURL = OutputURL + \
@@ -461,7 +455,7 @@ def send_nlp_response():
     elif 'Frequency' in oldValue.emptyList():
         result = getBotReplyText('missing_frequency_question')
 
-    sessionData = None if('None' in oldValue.emptyList()
+    sessionData = '{}' if('None' in oldValue.emptyList()
                           ) else jsonpickle.encode(oldValue)
     query = update(sessionVariable).values(session_data=sessionData).where(
         sessionVariable.columns.session_id == str(req.get('session')))

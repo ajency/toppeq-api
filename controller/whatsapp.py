@@ -11,7 +11,7 @@ from controller.messages import *
 from google.cloud import language_v1, language
 from google.cloud.language_v1 import enums, types
 from google.oauth2.service_account import Credentials
-from datetime import date
+from datetime import date, datetime
 from sqlalchemy import create_engine, MetaData, Table, Column, select, insert, and_, update
 from dotenv import load_dotenv, find_dotenv
 from language import importlanguage
@@ -31,6 +31,8 @@ twilioKey = Table('whatsapp_company_twilio_accounts', metadata,
 sessionVariable = Table('whatsapp_user_active_sessions', metadata,
                         autoload=True, autoload_with=engine)
 
+phoneUsers = Table('whatsapp_company_phone_users', metadata,
+                   autoload=True, autoload_with=engine)
 
 whatsapp_call = Blueprint('whatsapp', __name__)
 
@@ -76,14 +78,49 @@ def new_text(account_sid, auth_token):
 def incoming_sms():
 
     account_sid = request.values.get('AccountSid', None)
+    contact = str(request.values.get('From', None))
+    contact = contact.replace('whatsapp:+', '')
+    sidMode = os.getenv('WHATSAPP_ACCOUNT_MODE')
+    if(sidMode == 'GLOBAL'):
 
-    query = select([twilioKey.columns.auth_token, twilioKey.columns.external_company_id]).where(twilioKey.columns.account_sid ==
-                                                                                                account_sid)
-    ResultProxy = connection.execute(query)
+        # get ext company id from phno in
+        query = select([phoneUsers.columns.external_company_id]).where(
+            phoneUsers.columns.contact_number == contact)
+        ResultProxy = connection.execute(query)
 
-    ResultSet = ResultProxy.fetchone()
-    auth_token = ResultSet[0]
-    externalCompanyId = ResultSet[1]
+        ResultSet = ResultProxy.fetchone()
+        if(not ResultSet[0]):
+            # Error message, not of the company
+            resp = MessagingResponse()
+            # add templated message
+            resp.message(languageText['failedCompanyMessage'])
+            return str(resp)
+
+        externalCompanyId = ResultSet[0]
+        # get auth token where company id and sid
+        query = select([twilioKey.columns.auth_token]).where(and_(
+            twilioKey.columns.account_sid == account_sid, twilioKey.columns.external_company_id == externalCompanyId))
+        ResultProxy = connection.execute(query)
+
+        ResultSet = ResultProxy.fetchone()
+        if(not ResultSet[0]):
+            # Error message, not of the company
+            resp = MessagingResponse()
+            resp.message()  # add templated message
+        auth_token = ResultSet[0]
+
+    else:
+        query = select([twilioKey.columns.auth_token, twilioKey.columns.external_company_id]).where(twilioKey.columns.account_sid ==
+                                                                                                    account_sid)
+        ResultProxy = connection.execute(query)
+
+        ResultSet = ResultProxy.fetchone()
+        if(not ResultSet[0]):
+            # Error message, not of the company
+            resp = MessagingResponse()
+            resp.message()  # add templated message
+        auth_token = ResultSet[0]
+        externalCompanyId = ResultSet[1]
 
     print(vars(request.values))
     body = request.values.get('Body', None)
@@ -94,8 +131,7 @@ def incoming_sms():
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv(
         'WA_DIALOGFLOW_LOCATION')
     client = dialogflow_v2.SessionsClient()
-    contact = str(request.values.get('From', None))
-    contact = contact.replace('whatsapp:+', '')
+
     query = select([sessionVariable.columns.session_id]).where(and_(
         sessionVariable.columns.external_company_id == str(externalCompanyId), sessionVariable.columns.contact_number == contact))
 
@@ -103,9 +139,8 @@ def incoming_sms():
     ResultSet = ResultProxy.fetchone()
 
     if(ResultSet):
-        print(ResultSet)
         session = ResultSet[0]
-        query = update(sessionVariable).values(last_updated=date.today().strftime(r"%d-%m-%Y")).where(and_(
+        query = update(sessionVariable).values(last_updated=datetime.now()).where(and_(
             sessionVariable.columns.external_company_id == str(externalCompanyId), sessionVariable.columns.contact_number == contact))
         ResultProxy = connection.execute(query)
 
@@ -115,7 +150,7 @@ def incoming_sms():
             os.getenv('WA_DIALOGFLOW_PROJECT_ID'), session_generation)
 
         query = insert(sessionVariable).values(
-            external_company_id=ResultSet[1], contact_number=contact, session_id=str(session), last_updated=date.today().strftime(r"%d-%m-%Y"))
+            external_company_id=externalCompanyId, contact_number=contact, session_id=str(session), last_updated=datetime.now())
         ResultProxy = connection.execute(query)
 
     text_input = dialogflow_v2.types.TextInput(
@@ -124,8 +159,6 @@ def incoming_sms():
     query_input = dialogflow_v2.types.QueryInput(text=text_input)
     response = client.detect_intent(
         session=session, query_input=query_input)
-
-    print('Query text: {}'.format(response.query_result.fulfillment_text))
 
     resp = MessagingResponse()
 
@@ -143,5 +176,4 @@ def incoming_sms():
 # Prints Status of the Webhook when it receives the whatsapp message
 @whatsapp_call.route("/status", methods=['GET', 'POST'])
 def incoming_status():
-    print(str(request))
     return ''

@@ -38,11 +38,6 @@ def sendResponse(JSONObject):
         response = client.detect_intent(
             session=session, query_input=query_input)
 
-        print('Query text: {}'.format(response.query_result.query_text))
-        print('Detected intent: {} (confidence: {})\n'.format(
-            response.query_result.intent.display_name,
-            response.query_result.intent_detection_confidence))
-
         confidence = float("{0:.2f}".format(
             response.query_result.intent_detection_confidence * 100))
 
@@ -72,10 +67,6 @@ def searchTags(inputString):
     response = client.detect_intent(
         session=session, query_input=query_input)
 
-    print('Query text: {}'.format(response.query_result.query_text))
-    print('Detected intent: {} (confidence: {})\n'.format(
-        response.query_result.intent.display_name,
-        response.query_result.intent_detection_confidence))
     intentName = response.query_result.intent.display_name
     return intentName
 
@@ -116,7 +107,6 @@ def getTags(JSONObject):
         if(not listEntityname):
             listEntityname.append('miscellaneous')
         # remove duplicates
-        print(listEntityname)
         listEntityname = list(set(listEntityname))
         return {'outflow_tags': listEntityname}
     else:

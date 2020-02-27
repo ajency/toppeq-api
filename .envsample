@@ -3,4 +3,4 @@ WA_DIALOGFLOW_LOCATION = ../ url to the JSON of Dialogflow agent used for connec
 WA_DIALOGFLOW_PROJECT_ID = project ID of Dialogflow agent used for connecting to slotfilling API
 SLOT_DIALOGFLOW_PROJECT_ID = Project ID of Dialogflow agent used for NLP API
 SLOT_DIALOGFLOW_LOCATION = ../ url to JSON of Dialogflow agent used for NLP API
-WHATSAPP_ACCOUNT_MODE = GLOBAL #OR LOCAL
+WHATSAPP_ACCOUNT_MODE = GLOBAL #OR DEDICATED

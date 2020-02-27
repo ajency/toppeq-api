@@ -171,7 +171,7 @@ def filterResults(text):
 
 def mapAChead(acHead):
     acHead = acHead.replace(' ', '_').lower()
-    AcHeadMap = constants.AcHeadMap
+    AcHeadMap =controller.constants.AcHeadMap
     if (AcHeadMap[acHead]):
         return AcHeadMap[acHead]
     else:
@@ -291,8 +291,7 @@ def send_nlp_response():
 
     changeVar = 0
     for entity in response.entities:
-        entityDetectList = ["CONSUMER_GOOD", "OTHER", "WORK_OF_ART",
-                            "UNKNOWN", "EVENT", "PERSON", "ORGANIZATION", "LOCATION"]
+        entityDetectList = controller.constants.entityDetectList 
         # For List of entities
         if any(x in enums.Entity.Type(entity.type).name for x in entityDetectList):
             if((entity.name.title() != 'Subscription' or entity.name.title() != 'Rent' or entity.name.title() != 'Purchase')):
@@ -422,8 +421,6 @@ def send_nlp_response():
         }
 
         headers = {'Content-Type': 'application/json'}
-        print('Before sending API call')
-        print(json.dumps(payload))
         result = getBotReplyText('server_error')
 
         try:
@@ -438,8 +435,7 @@ def send_nlp_response():
                 result = OutputURL + buildResultText(outputJSON)
 
         except Exception as e:
-            print('API Failed')
-            print(e)
+            print('API Failed', e)
             result = getBotReplyText('server_error')
         oldValue.clearIt()
 

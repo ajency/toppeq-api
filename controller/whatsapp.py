@@ -123,11 +123,11 @@ def incoming_sms():
             resp.message(languageText['failedCompanyMessage'])
             return str(resp)
         else:
-            query = select([phoneUsers]).where(
+            query = select([phoneUsers.columns.contact_number]).where(
                 phoneUsers.columns.external_company_id == ResultSet[1])
             ResultProxy = connection.execute(query)
             ResultSet = ResultProxy.fetchone()
-            if not (None in ResultSet):
+            if (not None in ResultSet) and ( ResultSet[0].replace('whatsapp:+', '') == contact):
                 auth_token = ResultSet[0]
                 externalCompanyId = ResultSet[1]
             else:

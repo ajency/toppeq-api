@@ -116,7 +116,7 @@ def incoming_sms():
         ResultProxy = connection.execute(query)
 
         ResultSet = ResultProxy.fetchone()
-        if not (None in ResultSet):
+        if (None in ResultSet):
             # Error message, not of the company
             resp = MessagingResponse()
             # add templated message
@@ -126,8 +126,8 @@ def incoming_sms():
             query = select([phoneUsers.columns.contact_number]).where(
                 phoneUsers.columns.external_company_id == ResultSet[1])
             ResultProxy = connection.execute(query)
-            ResultSet = ResultProxy.fetchone()
-            if (not None in ResultSet) and ( ResultSet[0].replace('whatsapp:+', '') == contact):
+            ResultSet1 = ResultProxy.fetchone()
+            if (not None in ResultSet) and (ResultSet1[0] == contact):
                 auth_token = ResultSet[0]
                 externalCompanyId = ResultSet[1]
             else:

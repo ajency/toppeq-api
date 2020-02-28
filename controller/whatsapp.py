@@ -106,7 +106,8 @@ def incoming_sms():
         if(not ResultSet[0]):
             # Error message, not of the company
             resp = MessagingResponse()
-            resp.message()  # add templated message
+            # add templated message
+            resp.message(languageText['failedCompanyMessage'])
         auth_token = ResultSet[0]
 
     else:
@@ -118,9 +119,22 @@ def incoming_sms():
         if(not ResultSet[0]):
             # Error message, not of the company
             resp = MessagingResponse()
-            resp.message()  # add templated message
-        auth_token = ResultSet[0]
-        externalCompanyId = ResultSet[1]
+            # add templated message
+            resp.message(languageText['failedCompanyMessage'])
+            return str(resp)
+        else:
+            query = select([phoneUsers]).where(
+                phoneUsers.columns.external_company_id == ResultSet[1])
+            ResultProxy = connection.execute(query)
+            ResultSet = ResultProxy.fetchone()
+            if(ResultSet[0]):
+                auth_token = ResultSet[0]
+                externalCompanyId = ResultSet[1]
+            else:
+                resp = MessagingResponse()
+                # add templated message
+                resp.message(languageText['failedCompanyMessage'])
+                return str(resp)
 
     print(vars(request.values))
     body = request.values.get('Body', None)

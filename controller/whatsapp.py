@@ -89,7 +89,7 @@ def incoming_sms():
         ResultProxy = connection.execute(query)
 
         ResultSet = ResultProxy.fetchone()
-        if(not ResultSet[0]):
+        if not (None in ResultSet):
             # Error message, not of the company
             resp = MessagingResponse()
             # add templated message
@@ -103,7 +103,7 @@ def incoming_sms():
         ResultProxy = connection.execute(query)
 
         ResultSet = ResultProxy.fetchone()
-        if(not ResultSet[0]):
+        if not (None in ResultSet):
             # Error message, not of the company
             resp = MessagingResponse()
             # add templated message
@@ -116,7 +116,7 @@ def incoming_sms():
         ResultProxy = connection.execute(query)
 
         ResultSet = ResultProxy.fetchone()
-        if not (ResultSet[0] in None):
+        if not (None in ResultSet):
             # Error message, not of the company
             resp = MessagingResponse()
             # add templated message
@@ -127,7 +127,7 @@ def incoming_sms():
                 phoneUsers.columns.external_company_id == ResultSet[1])
             ResultProxy = connection.execute(query)
             ResultSet = ResultProxy.fetchone()
-            if not (ResultSet[0] in None):
+            if not (None in ResultSet):
                 auth_token = ResultSet[0]
                 externalCompanyId = ResultSet[1]
             else:

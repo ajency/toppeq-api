@@ -46,7 +46,6 @@ def help_text(account_sid, auth_token):
         body=getBotReplyText('help'),
         to=request.values.get('From', None)
     )
-    time.sleep(1)
 
 # Writes a Welcome Text Message to Whatsapp
 
@@ -78,18 +77,19 @@ def new_text(account_sid, auth_token):
 def incoming_sms():
 
     account_sid = request.values.get('AccountSid', None)
-    contact = str(request.values.get('From', None))
-    contact = contact.replace('whatsapp:+', '')
+    contactTo = str(request.values.get('From', None))
+    contactTo = contactTo.replace('whatsapp:+', '')
+
     sidMode = os.getenv('WHATSAPP_ACCOUNT_MODE')
     if(sidMode == 'GLOBAL'):
 
         # get ext company id from phno in
         query = select([phoneUsers.columns.external_company_id]).where(
-            phoneUsers.columns.contact_number == contact)
+            phoneUsers.columns.contact_number == contactTo)
         ResultProxy = connection.execute(query)
 
         ResultSet = ResultProxy.fetchone()
-        if not (None in ResultSet):
+        if not(ResultSet):
             # Error message, not of the company
             resp = MessagingResponse()
             # add templated message
@@ -103,11 +103,12 @@ def incoming_sms():
         ResultProxy = connection.execute(query)
 
         ResultSet = ResultProxy.fetchone()
-        if not (None in ResultSet):
+        if not(ResultSet):
             # Error message, not of the company
             resp = MessagingResponse()
             # add templated message
             resp.message(languageText['failedCompanyMessage'])
+            return str(resp)
         auth_token = ResultSet[0]
 
     else:
@@ -116,7 +117,7 @@ def incoming_sms():
         ResultProxy = connection.execute(query)
 
         ResultSet = ResultProxy.fetchone()
-        if (None in ResultSet):
+        if not(ResultSet):
             # Error message, not of the company
             resp = MessagingResponse()
             # add templated message
@@ -127,14 +128,15 @@ def incoming_sms():
                 phoneUsers.columns.external_company_id == ResultSet[1])
             ResultProxy = connection.execute(query)
             ResultSet1 = ResultProxy.fetchone()
-            if (not None in ResultSet) and (ResultSet1[0] == contact):
-                auth_token = ResultSet[0]
-                externalCompanyId = ResultSet[1]
-            else:
+            if not(ResultSet1):
                 resp = MessagingResponse()
                 # add templated message
                 resp.message(languageText['failedCompanyMessage'])
                 return str(resp)
+            else:
+                if(ResultSet1[0] == contactTo):
+                    auth_token = ResultSet[0]
+                    externalCompanyId = ResultSet[1]
 
     print(vars(request.values))
     body = request.values.get('Body', None)
@@ -147,7 +149,7 @@ def incoming_sms():
     client = dialogflow_v2.SessionsClient()
 
     query = select([sessionVariable.columns.session_id]).where(and_(
-        sessionVariable.columns.external_company_id == str(externalCompanyId), sessionVariable.columns.contact_number == contact))
+        sessionVariable.columns.external_company_id == str(externalCompanyId), sessionVariable.columns.contact_number == contactTo))
 
     ResultProxy = connection.execute(query)
     ResultSet = ResultProxy.fetchone()
@@ -155,16 +157,16 @@ def incoming_sms():
     if(ResultSet):
         session = ResultSet[0]
         query = update(sessionVariable).values(last_updated=datetime.now()).where(and_(
-            sessionVariable.columns.external_company_id == str(externalCompanyId), sessionVariable.columns.contact_number == contact))
+            sessionVariable.columns.external_company_id == str(externalCompanyId), sessionVariable.columns.contact_number == contactTo))
         ResultProxy = connection.execute(query)
 
     else:
-        session_generation = str(int(time.time())) + str(contact)
+        session_generation = str(int(time.time())) + str(contactTo)
         session = client.session_path(
             os.getenv('WA_DIALOGFLOW_PROJECT_ID'), session_generation)
 
         query = insert(sessionVariable).values(
-            external_company_id=externalCompanyId, contact_number=contact, session_id=str(session), last_updated=datetime.now())
+            external_company_id=externalCompanyId, contact_number=contactTo, session_id=str(session), last_updated=datetime.now())
         ResultProxy = connection.execute(query)
 
     text_input = dialogflow_v2.types.TextInput(

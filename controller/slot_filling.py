@@ -71,6 +71,7 @@ class lastEntry():
     askFor = 'None'
     category = ''
     tags = []
+    notifyList = []
 
     def isEmpty(self):
         if self.Amount == '0' and self.Description == '' and self.ExpenseType == '' and self.entitySend == '':
@@ -98,6 +99,7 @@ class lastEntry():
         self.askFor = 'None'
         self.category = ''
         self.tags = []
+        self.notifyList = []
 
     def emptyList(self):
         if self.Amount == '0':
@@ -166,37 +168,13 @@ def filterResults(text):
     op = removeConsecutiveSpaces(convertWordstoNum(removeStopwords(text)))
     return lowerCaps(op)
 
-# maps accounting head to the number to be sent to db
-
-
-def mapAChead(acHead):
-    acHead = acHead.replace(' ', '_').lower()
-    AcHeadMap =controller.constants.AcHeadMap
-    if (AcHeadMap[acHead]):
-        return AcHeadMap[acHead]
-    else:
-        return AcHeadMap["others"]
-
-# gets accounting head from the  accountingHead page
-
-
-def getACHead(text):
-    output = json.loads(json.dumps(sendResponse(
-        json.loads(json.dumps(text)))))['accountHead']
-    return output.replace('_', " ").title()
-
-# gets tags from accountingHead page
-
-
-def receiveTags(text):
-    tempList = []
-    if(oldValue.tags == []):
-        tempList = json.loads(json.dumps(getTags(
-            json.loads(json.dumps(text)))))['outflow_tags']
-        oldValue.tags.append(oldValue.category.title())
-        for string in tempList:
-            oldValue.tags.append(string.title())
-    return ''
+# Get contacts to be notified from entry 
+def getnotifyList(text):
+    a = re.findall(r' @\w+', ' '+text)
+    b = []
+    for item in a:
+        b.append ( item.replace(' @','').title() )
+    return b
 
 # Generates whatsapp output in a specified format to be sent
 
@@ -289,9 +267,12 @@ def send_nlp_response():
     response = client.annotate_text(document, features)
     print('Checking for : '+oldValue.askFor)
 
+    if(oldValue.askFor == 'None'):
+        oldValue.notifyList = getnotifyList(filteredText)
+
     changeVar = 0
     for entity in response.entities:
-        entityDetectList = controller.constants.entityDetectList 
+        entityDetectList = controller.constants.entityDetectList
         # For List of entities
         if any(x in enums.Entity.Type(entity.type).name for x in entityDetectList):
             if((entity.name.title() != 'Subscription' or entity.name.title() != 'Rent' or entity.name.title() != 'Purchase')):
@@ -414,7 +395,8 @@ def send_nlp_response():
                     "expenseRecurrence": {
                         "frequency": oldValue.frequency
                     },
-                    dateKey: dateValue if(dateValue) else ''
+                    dateKey: dateValue if(dateValue) else '',
+                    "notifyCustomUsers": oldValue.notifyList
                 }
             },
             "query": "mutation CreateExpense($input: ExpenseInput) {\n createExpense(input: $input) {\n id \n title \n referenceId \n description \n amount \n currency \n expenseDueDate \n finalPaymentDate \n recurring \n referenceId \n paymentStatus \n accountingHead \n{ \n displayName \n} \n notifyUsers \n{ \n userMeta \n{ \n name \n} \n} \n expenseRecurrence \n{ \n frequency \n} \n expenseTags}\n}\n"

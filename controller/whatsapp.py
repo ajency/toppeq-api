@@ -81,6 +81,7 @@ def incoming_sms():
     contactTo = contactTo.replace('whatsapp:+', '')
 
     sidMode = os.getenv('WHATSAPP_ACCOUNT_MODE')
+    externalCompanyId = ''
     if(sidMode == 'GLOBAL'):
 
         # get ext company id from phno in

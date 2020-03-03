@@ -223,14 +223,17 @@ def buildResultText(outputJSON):
         names = userMeta['userMeta']
         for name in names:
             outputUsers += (' '+names[name] + ',')
-
+    #notifyCustomUsers
+    customUserList = (outputJSON['data']['createExpense']['notifyCustomUsers'])
+    for name in customUserList:
+        outputUsers += (' '+names+ ',')
     resultString += (languageText['outputSummaryMessage10'] + outputUsers[:-1])
 
     return resultString
 
 def clearDB(sessionData, sessionID ):
     query = update(sessionVariable).values(session_data=sessionData).where(
-        sessionVariable.columns.session_id == sessionID))
+        sessionVariable.columns.session_id == sessionID)
     ResultProxy = connection.execute(query)
 
 # Webhook function to return response  to Twilio webhook
@@ -409,7 +412,7 @@ def send_nlp_response():
                     "notifyCustomUsers": oldValue.notifyList
                 }
             },
-            "query": "mutation CreateExpense($input: ExpenseInput) {\n createExpense(input: $input) {\n id \n title \n referenceId \n description \n amount \n currency \n expenseDueDate \n finalPaymentDate \n recurring \n referenceId \n paymentStatus \n accountingHead \n{ \n displayName \n} \n notifyUsers \n{ \n userMeta \n{ \n name \n} \n} \n expenseRecurrence \n{ \n frequency \n} \n expenseTags}\n}\n"
+            "query": "mutation CreateExpense($input: ExpenseInput) {\n createExpense(input: $input) {\n id \n title \n referenceId \n description \n amount \n currency \n expenseDueDate \n finalPaymentDate \n recurring \n referenceId \n paymentStatus \n accountingHead \n{ \n displayName \n} \n notifyUsers \n{ \n userMeta \n{ \n name \n} \n} \n expenseRecurrence \n{ \n frequency \n} \n expenseTags \nnotifyCustomUsers }\n}\n"
         }
 
         headers = {'Content-Type': 'application/json'}

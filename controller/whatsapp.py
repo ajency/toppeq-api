@@ -139,21 +139,16 @@ def incoming_sms():
                 resp.message(languageText['failedCompanyMessage'])
                 return str(resp)
             else:
-                # iterate through
+                #iterate through
                 numberFound = 0
                 for resultItem in ResultSet1:
                     if(resultItem[0] == contactTo):
                         auth_token = ResultSet[0]
-                        externalCompanyId = resultItem[1]
+                        externalCompanyId = ResultSet[1]
                         numberFound = 1
                 if(numberFound == 0):
                     resp = MessagingResponse()
                     print('Error 5')
-                    resp.message(languageText['failedCompanyMessage'])
-                    return str(resp)
-                else:
-                    resp = MessagingResponse()
-                    print('Error 6')
                     resp.message(languageText['failedCompanyMessage'])
                     return str(resp)
 

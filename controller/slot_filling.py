@@ -226,7 +226,7 @@ def buildResultText(outputJSON):
     customUserList = (outputJSON['data']['createExpense']['notifyCustomUsers'])
     if(customUserList):
         print(customUserList)
-        outputUsers += (' '+name + ',')
+        outputUsers += (' '+customUserList + ',')
     resultString += (languageText['outputSummaryMessage10'] + outputUsers[:-1])
 
     return resultString

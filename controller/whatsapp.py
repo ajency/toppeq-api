@@ -178,7 +178,7 @@ def incoming_sms():
         ResultProxy = connection.execute(query)
 
     text_input = dialogflow_v2.types.TextInput(
-        text=body.title(), language_code="en")
+        text=body, language_code="en")
 
     query_input = dialogflow_v2.types.QueryInput(text=text_input)
     response = client.detect_intent(

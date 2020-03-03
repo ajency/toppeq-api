@@ -224,8 +224,9 @@ def buildResultText(outputJSON):
             outputUsers += (' '+names[name] + ',')
     # notifyCustomUsers
     customUserList = (outputJSON['data']['createExpense']['notifyCustomUsers'])
-    for name in customUserList:
-        outputUsers += (' '+names + ',')
+    if(customUserList):
+        print(customUserList)
+        outputUsers += (' '+name + ',')
     resultString += (languageText['outputSummaryMessage10'] + outputUsers[:-1])
 
     return resultString
@@ -389,7 +390,8 @@ def send_nlp_response():
     oldValue.askFor = oldValue.emptyList()
     if 'None' in oldValue.emptyList():
         url = "https://ajency-qa.api.toppeq.com/graphql"
-
+        print(type(oldValue.notifyList))
+        print((oldValue.notifyList))
         dateKey = "finalPaymentDate" if oldValue.paymentStatus == "Paid" else "expenseDueDate"
         dateValue = oldValue.paymentDate.strftime(r"%Y-%m-%d %H:%M:%S")
         payload = {
@@ -423,6 +425,7 @@ def send_nlp_response():
                 "POST", url, headers=headers, data=json.dumps(payload))
             OutputURL = languageText['successWhatsappMessage']
             outputJSON = response.json()
+            print(outputJSON)
             if(outputJSON['data']['createExpense']['id']):
                 OutputURL = OutputURL + \
                     str(outputJSON['data']['createExpense']['id'])

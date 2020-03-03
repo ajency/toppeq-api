@@ -131,7 +131,7 @@ def incoming_sms():
             query = select([phoneUsers.columns.contact_number]).where(
                 phoneUsers.columns.external_company_id == ResultSet[1])
             ResultProxy = connection.execute(query)
-            ResultSet1 = ResultProxy.fetchone()
+            ResultSet1 = ResultProxy.fetchall()
             if not(ResultSet1):
                 resp = MessagingResponse()
                 print('Error 4')
@@ -139,12 +139,21 @@ def incoming_sms():
                 resp.message(languageText['failedCompanyMessage'])
                 return str(resp)
             else:
-                if(ResultSet1[0] == contactTo):
-                    auth_token = ResultSet[0]
-                    externalCompanyId = ResultSet[1]
-                else:
+                # iterate through
+                numberFound = 0
+                for resultItem in ResultSet1:
+                    if(resultItem[0] == contactTo):
+                        auth_token = ResultSet[0]
+                        externalCompanyId = resultItem[1]
+                        numberFound = 1
+                if(numberFound == 0):
                     resp = MessagingResponse()
                     print('Error 5')
+                    resp.message(languageText['failedCompanyMessage'])
+                    return str(resp)
+                else:
+                    resp = MessagingResponse()
+                    print('Error 6')
                     resp.message(languageText['failedCompanyMessage'])
                     return str(resp)
 

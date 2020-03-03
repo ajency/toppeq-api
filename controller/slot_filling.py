@@ -168,12 +168,14 @@ def filterResults(text):
     op = removeConsecutiveSpaces(convertWordstoNum(removeStopwords(text)))
     return lowerCaps(op)
 
-# Get contacts to be notified from entry 
+# Get contacts to be notified from entry
+
+
 def getnotifyList(text):
     a = re.findall(r' @\w+', ' '+text)
     b = []
     for item in a:
-        b.append ( item.replace(' @','').title() )
+        b.append(item.replace(' @', '').title())
     return b
 
 # Generates whatsapp output in a specified format to be sent
@@ -226,6 +228,11 @@ def buildResultText(outputJSON):
 
     return resultString
 
+def clearDB(sessionData, sessionID ):
+    query = update(sessionVariable).values(session_data=sessionData).where(
+        sessionVariable.columns.session_id == sessionID))
+    ResultProxy = connection.execute(query)
+
 # Webhook function to return response  to Twilio webhook
 @slot_fill.route('/slotfill/', methods=['GET', 'POST'])
 def send_nlp_response():
@@ -243,7 +250,13 @@ def send_nlp_response():
     inputText = str(req.get('queryResult').get('queryText'))
     if(inputText.lower() == 'reset vars'):
         oldValue.clearIt()
+        clearDB(jsonpickle.encode(oldValue), str(req.get('session')))
         return {'fulfillmentText':  'Cleared'}
+
+    if(oldValue.askFor == 'None'):
+        oldValue.notifyList = getnotifyList(inputText)
+        print('Detected list to be notified  = '+str(oldValue.notifyList))
+        inputText = re.sub(r'@\w+ ', '', inputText+' ')
 
     oldValue.Description = inputText if oldValue.Description == '' else oldValue.Description
 
@@ -266,9 +279,6 @@ def send_nlp_response():
 
     response = client.annotate_text(document, features)
     print('Checking for : '+oldValue.askFor)
-
-    if(oldValue.askFor == 'None'):
-        oldValue.notifyList = getnotifyList(filteredText)
 
     changeVar = 0
     for entity in response.entities:
@@ -435,7 +445,6 @@ def send_nlp_response():
 
     sessionData = '{}' if('None' in oldValue.emptyList()
                           ) else jsonpickle.encode(oldValue)
-    query = update(sessionVariable).values(session_data=sessionData).where(
-        sessionVariable.columns.session_id == str(req.get('session')))
-    ResultProxy = connection.execute(query)
+
+    clearDB(sessionData, str(req.get('session')))                          
     return {'fulfillmentText':  result}

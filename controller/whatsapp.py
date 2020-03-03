@@ -82,8 +82,8 @@ def incoming_sms():
 
     sidMode = os.getenv('WHATSAPP_ACCOUNT_MODE')
     externalCompanyId = ''
+    print(sidMode)
     if(sidMode == 'GLOBAL'):
-
         # get ext company id from phno in
         query = select([phoneUsers.columns.external_company_id]).where(
             phoneUsers.columns.contact_number == contactTo)
@@ -92,6 +92,7 @@ def incoming_sms():
         ResultSet = ResultProxy.fetchone()
         if not(ResultSet):
             # Error message, not of the company
+            print('Error 1')
             resp = MessagingResponse()
             # add templated message
             resp.message(languageText['failedCompanyMessage'])
@@ -106,6 +107,7 @@ def incoming_sms():
         ResultSet = ResultProxy.fetchone()
         if not(ResultSet):
             # Error message, not of the company
+            print('Error 2')
             resp = MessagingResponse()
             # add templated message
             resp.message(languageText['failedCompanyMessage'])
@@ -120,6 +122,7 @@ def incoming_sms():
         ResultSet = ResultProxy.fetchone()
         if not(ResultSet):
             # Error message, not of the company
+            print('Error 3')
             resp = MessagingResponse()
             # add templated message
             resp.message(languageText['failedCompanyMessage'])
@@ -131,6 +134,7 @@ def incoming_sms():
             ResultSet1 = ResultProxy.fetchone()
             if not(ResultSet1):
                 resp = MessagingResponse()
+                print('Error 4')
                 # add templated message
                 resp.message(languageText['failedCompanyMessage'])
                 return str(resp)
@@ -138,6 +142,11 @@ def incoming_sms():
                 if(ResultSet1[0] == contactTo):
                     auth_token = ResultSet[0]
                     externalCompanyId = ResultSet[1]
+                else:
+                    resp = MessagingResponse()
+                    print('Error 5')
+                    resp.message(languageText['failedCompanyMessage'])
+                    return str(resp)
 
     print(vars(request.values))
     body = request.values.get('Body', None)

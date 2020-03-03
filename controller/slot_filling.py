@@ -223,15 +223,16 @@ def buildResultText(outputJSON):
         names = userMeta['userMeta']
         for name in names:
             outputUsers += (' '+names[name] + ',')
-    #notifyCustomUsers
+    # notifyCustomUsers
     customUserList = (outputJSON['data']['createExpense']['notifyCustomUsers'])
     for name in customUserList:
-        outputUsers += (' '+names+ ',')
+        outputUsers += (' '+names + ',')
     resultString += (languageText['outputSummaryMessage10'] + outputUsers[:-1])
 
     return resultString
 
-def clearDB(sessionData, sessionID ):
+
+def clearDB(sessionData, sessionID):
     query = update(sessionVariable).values(session_data=sessionData).where(
         sessionVariable.columns.session_id == sessionID)
     ResultProxy = connection.execute(query)
@@ -449,5 +450,5 @@ def send_nlp_response():
     sessionData = '{}' if('None' in oldValue.emptyList()
                           ) else jsonpickle.encode(oldValue)
 
-    clearDB(sessionData, str(req.get('session')))                          
+    clearDB(sessionData, str(req.get('session')))
     return {'fulfillmentText':  result}

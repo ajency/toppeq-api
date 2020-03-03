@@ -1,5 +1,4 @@
 from __future__ import print_function
-import sys
 import os
 import json
 import dialogflow_v2

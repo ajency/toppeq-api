@@ -1,5 +1,5 @@
 from __future__ import print_function
-from flask import Flask, request, redirect, Blueprint
+from flask import Flask, request, Blueprint
 from twilio.twiml.messaging_response import MessagingResponse
 import time
 import os
@@ -10,7 +10,6 @@ from twilio.rest import Client
 from controller.messages import *
 from google.cloud import language_v1, language
 from google.cloud.language_v1 import enums, types
-from google.oauth2.service_account import Credentials
 from datetime import date, datetime
 from sqlalchemy import create_engine, MetaData, Table, Column, select, insert, and_, update
 from dotenv import load_dotenv, find_dotenv
@@ -92,7 +91,6 @@ def incoming_sms():
         ResultSet = ResultProxy.fetchone()
         if not(ResultSet):
             # Error message, not of the company
-            print('Error 1')
             resp = MessagingResponse()
             # add templated message
             resp.message(languageText['failedCompanyMessage'])
@@ -107,7 +105,6 @@ def incoming_sms():
         ResultSet = ResultProxy.fetchone()
         if not(ResultSet):
             # Error message, not of the company
-            print('Error 2')
             resp = MessagingResponse()
             # add templated message
             resp.message(languageText['failedCompanyMessage'])
@@ -122,7 +119,6 @@ def incoming_sms():
         ResultSet = ResultProxy.fetchone()
         if not(ResultSet):
             # Error message, not of the company
-            print('Error 3')
             resp = MessagingResponse()
             # add templated message
             resp.message(languageText['failedCompanyMessage'])
@@ -134,12 +130,11 @@ def incoming_sms():
             ResultSet1 = ResultProxy.fetchall()
             if not(ResultSet1):
                 resp = MessagingResponse()
-                print('Error 4')
                 # add templated message
                 resp.message(languageText['failedCompanyMessage'])
                 return str(resp)
             else:
-                #iterate through
+                # iterate through
                 numberFound = 0
                 for resultItem in ResultSet1:
                     if(resultItem[0] == contactTo):
@@ -148,7 +143,6 @@ def incoming_sms():
                         numberFound = 1
                 if(numberFound == 0):
                     resp = MessagingResponse()
-                    print('Error 5')
                     resp.message(languageText['failedCompanyMessage'])
                     return str(resp)
 

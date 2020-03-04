@@ -34,6 +34,7 @@ def getBotReplyText(textType, options='none'):
         'missing_frequency_question': frequencyMessage(),
         'missing_amount_question': amountMessage(options),
         'missing_entity_question': entityMessage(options),
-        'missing_date_question': dateMessage(options)
+        'missing_date_question': dateMessage(options),
+        'repeat_question': "Sorry I didn't understand your response. Can you please rephrase that?"
     }
     return switcher.get(textType, "")

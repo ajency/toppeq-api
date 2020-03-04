@@ -11,13 +11,14 @@ import jsonpickle
 import random
 import string
 import controller.constants
+import spacy
 
 from flask import Flask, request, make_response, jsonify, session, Blueprint
 from dialogflow_v2 import types
 from google.cloud import language_v1, language
 from google.cloud.language_v1 import enums, types
 from text2digits import text2digits
-from datetime import datetime, date, time, timedelta
+from datetime import datetime, date, timedelta
 from controller.accounting_head import sendResponse, getTags
 from controller.messages import *
 from datetime import datetime
@@ -27,6 +28,8 @@ from language import importlanguage
 
 languageText = importlanguage.getLanguage()
 languageText = json.loads(json.dumps(languageText))
+
+nlp = spacy.load('en_core_web_sm')
 
 load_dotenv(find_dotenv())
 
@@ -71,6 +74,7 @@ class lastEntry():
     category = ''
     tags = []
     notifyList = []
+    lastAsked = ''
 
     def isEmpty(self):
         if self.Amount == '0' and self.Description == '' and self.ExpenseType == '' and self.entitySend == '':
@@ -99,6 +103,7 @@ class lastEntry():
         self.category = ''
         self.tags = []
         self.notifyList = []
+        self.lastAsked = ''
 
     def emptyList(self):
         if self.Amount == '0':
@@ -185,7 +190,8 @@ def buildResultText(outputJSON):
         outputJSON['data']['createExpense']['title']
     resultString += languageText['outputSummaryMessage2'] + \
         outputJSON['data']['createExpense']['currency'] + \
-        ' ' + str(outputJSON['data']['createExpense']['amount'])
+        ' ' + \
+        "{0:.2f}".format(float(outputJSON['data']['createExpense']['amount']))
     resultString += languageText['outputSummaryMessage3'] + \
         outputJSON['data']['createExpense']['paymentStatus']
 
@@ -225,7 +231,6 @@ def buildResultText(outputJSON):
     # notifyCustomUsers
     customUserList = (outputJSON['data']['createExpense']['notifyCustomUsers'])
     if(customUserList):
-        print(customUserList)
         outputUsers += (' '+customUserList + ',')
     resultString += (languageText['outputSummaryMessage10'] + outputUsers[:-1])
 
@@ -240,6 +245,7 @@ def clearDB(sessionData, sessionID):
 # Webhook function to return response  to Twilio webhook
 @slot_fill.route('/slotfill/', methods=['GET', 'POST'])
 def send_nlp_response():
+    start = time.time()
     oldValue = lastEntry()
     req = request.get_json(force=True)
     query = select([sessionVariable.columns.session_data]).where(
@@ -250,7 +256,8 @@ def send_nlp_response():
 
     if(ResultSet[0]):
         oldValue = jsonpickle.decode(ResultSet[0])
-
+    print('\033[1m FETCH SESSION FROM DB:' +
+          "{0:.5f}".format(time.time() - start) + '\033[0m')
     inputText = str(req.get('queryResult').get('queryText'))
     if(inputText.lower() == 'reset vars'):
         oldValue.clearIt()
@@ -259,7 +266,6 @@ def send_nlp_response():
 
     if(oldValue.askFor == 'None'):
         oldValue.notifyList = getnotifyList(inputText)
-        print('Detected list to be notified  = '+str(oldValue.notifyList))
         inputText = re.sub(r'@\w+ ', '', inputText+' ')
 
     oldValue.Description = inputText if oldValue.Description == '' else oldValue.Description
@@ -267,7 +273,8 @@ def send_nlp_response():
     inputIntent = str(req.get('queryResult').get('intent').get('displayName'))
 
     filteredText = filterResults(inputText+' ')
-
+    print('\033[1m TEXT FILTERING:' +
+          "{0:.5f}".format(time.time() - start) + '\033[0m')
     listTosend = {'inputText':  str(filteredText)}
 
     document = language.types.Document(
@@ -280,8 +287,11 @@ def send_nlp_response():
         extract_document_sentiment=False,
         extract_entity_sentiment=False,
         classify_text=False)
-
+    print('\033[1m pre NLP API RESPONSE:' +
+          "{0:.5f}".format(time.time() - start) + '\033[0m')
     response = client.annotate_text(document, features)
+    print('\033[1m NLP API RESPONSE:' +
+          "{0:.5f}".format(time.time() - start) + '\033[0m')
     print('Checking for : '+oldValue.askFor)
 
     changeVar = 0
@@ -381,17 +391,26 @@ def send_nlp_response():
                 print('Date Error')
 
     # Detect Tense for Paid/Unpaid
-    for token in response.tokens:
-        # 3 = enum for Past
-        if(token.part_of_speech.tense == 3):
-            oldValue.paymentStatus = "Paid"
+    if(oldValue.askFor == 'None'):
+        checkTense = 0
+        for token in response.tokens:
+            # 3 = enum for Past
+            if(token.part_of_speech.tense == 3):
+                oldValue.paymentStatus = "Paid"
+                checkTense = 1
+
+        if checkTense == 0:
+            introduction_doc = nlp(filteredText.lower())
+            for token in introduction_doc:
+                if(token.tag_ == 'VBD' or token.tag_ == 'VBN'):
+                    oldValue.paymentStatus = "Paid"
 
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()
+    print('\033[1m READY TO CALL API:' +
+          "{0:.5f}".format(time.time() - start) + '\033[0m')
     if 'None' in oldValue.emptyList():
         url = "https://ajency-qa.api.toppeq.com/graphql"
-        print(type(oldValue.notifyList))
-        print((oldValue.notifyList))
         dateKey = "finalPaymentDate" if oldValue.paymentStatus == "Paid" else "expenseDueDate"
         dateValue = oldValue.paymentDate.strftime(r"%Y-%m-%d %H:%M:%S")
         payload = {
@@ -437,6 +456,9 @@ def send_nlp_response():
             result = getBotReplyText('server_error')
         oldValue.clearIt()
 
+    elif oldValue.askFor == oldValue.lastAsked:
+        result = getBotReplyText(
+            'repeat_question')
     elif 'Amount' in oldValue.emptyList():
         result = getBotReplyText(
             'missing_amount_question', oldValue.paymentStatus)
@@ -449,8 +471,10 @@ def send_nlp_response():
     elif 'Frequency' in oldValue.emptyList():
         result = getBotReplyText('missing_frequency_question')
 
+    oldValue.lastAsked = oldValue.askFor
     sessionData = '{}' if('None' in oldValue.emptyList()
                           ) else jsonpickle.encode(oldValue)
 
     clearDB(sessionData, str(req.get('session')))
+    print('\033[1m END:' + "{0:.5f}".format(time.time() - start) + '\033[0m')
     return {'fulfillmentText':  result}

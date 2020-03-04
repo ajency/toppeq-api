@@ -74,37 +74,21 @@ def new_text(account_sid, auth_token):
 # Reads Input from Whatsapp and Sends it through Dialogflow and returns the response
 @whatsapp_call.route("/sms", methods=['GET', 'POST'])
 def incoming_sms():
-
+    start = time.time()
     account_sid = request.values.get('AccountSid', None)
     contactTo = str(request.values.get('From', None))
     contactTo = contactTo.replace('whatsapp:+', '')
 
     sidMode = os.getenv('WHATSAPP_ACCOUNT_MODE')
     externalCompanyId = ''
-    print(sidMode)
     if(sidMode == 'GLOBAL'):
         # get ext company id from phno in
-        query = select([phoneUsers.columns.external_company_id]).where(
-            phoneUsers.columns.contact_number == contactTo)
+        query = select([twilioKey.columns.auth_token])
+        query = query.select_from(phoneUsers.join(twilioKey, and_(
+            twilioKey.columns.account_sid == account_sid, twilioKey.columns.external_company_id == phoneUsers.columns.external_company_id, phoneUsers.columns.contact_number == contactTo)))
         ResultProxy = connection.execute(query)
-
         ResultSet = ResultProxy.fetchone()
         if not(ResultSet):
-            # Error message, not of the company
-            resp = MessagingResponse()
-            # add templated message
-            resp.message(languageText['failedCompanyMessage'])
-            return str(resp)
-
-        externalCompanyId = ResultSet[0]
-        # get auth token where company id and sid
-        query = select([twilioKey.columns.auth_token]).where(and_(
-            twilioKey.columns.account_sid == account_sid, twilioKey.columns.external_company_id == externalCompanyId))
-        ResultProxy = connection.execute(query)
-
-        ResultSet = ResultProxy.fetchone()
-        if not(ResultSet):
-            # Error message, not of the company
             resp = MessagingResponse()
             # add templated message
             resp.message(languageText['failedCompanyMessage'])
@@ -112,40 +96,21 @@ def incoming_sms():
         auth_token = ResultSet[0]
 
     else:
-        query = select([twilioKey.columns.auth_token, twilioKey.columns.external_company_id]).where(twilioKey.columns.account_sid ==
-                                                                                                    account_sid)
+        query = select([twilioKey.columns.auth_token,
+                        twilioKey.columns.external_company_id])
+        query = query.select_from(twilioKey.join(phoneUsers, and_(twilioKey.columns.account_sid == account_sid, phoneUsers.columns.external_company_id == twilioKey.columns.external_company_id, phoneUsers.columns.contact_number == contactTo
+                                                                  )))
         ResultProxy = connection.execute(query)
-
         ResultSet = ResultProxy.fetchone()
         if not(ResultSet):
-            # Error message, not of the company
             resp = MessagingResponse()
             # add templated message
             resp.message(languageText['failedCompanyMessage'])
             return str(resp)
         else:
-            query = select([phoneUsers.columns.contact_number]).where(
-                phoneUsers.columns.external_company_id == ResultSet[1])
-            ResultProxy = connection.execute(query)
-            ResultSet1 = ResultProxy.fetchall()
-            if not(ResultSet1):
-                resp = MessagingResponse()
-                # add templated message
-                resp.message(languageText['failedCompanyMessage'])
-                return str(resp)
-            else:
-                # iterate through
-                numberFound = 0
-                for resultItem in ResultSet1:
-                    if(resultItem[0] == contactTo):
-                        auth_token = ResultSet[0]
-                        externalCompanyId = ResultSet[1]
-                        numberFound = 1
-                if(numberFound == 0):
-                    resp = MessagingResponse()
-                    resp.message(languageText['failedCompanyMessage'])
-                    return str(resp)
-
+            auth_token = ResultSet[0]
+            externalCompanyId = ResultSet[1]
+    print('TOKEN DETECTED:', time.time() - start)
     print(vars(request.values))
     body = request.values.get('Body', None)
     incoming_text = body
@@ -183,7 +148,7 @@ def incoming_sms():
     query_input = dialogflow_v2.types.QueryInput(text=text_input)
     response = client.detect_intent(
         session=session, query_input=query_input)
-
+    print('RESPONSE RECEIVED:', time.time() - start)
     resp = MessagingResponse()
 
     resp.message(response.query_result.fulfillment_text)
@@ -195,6 +160,7 @@ def incoming_sms():
             new_text(account_sid, auth_token)
         else:
             help_text(account_sid, auth_token)
+    print('EXITING:', time.time() - start)
     return str(resp)
 
 # Prints Status of the Webhook when it receives the whatsapp message

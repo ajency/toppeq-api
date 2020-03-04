@@ -4,6 +4,7 @@ import sys
 import os
 import json
 import re
+import time
 import dialogflow_v2
 from dialogflow_v2 import types
 import random
@@ -24,6 +25,7 @@ sessionID = ''.join(random.choice(letters) for i in range(10))
 
 
 def sendResponse(JSONObject):
+    start = time.time()
     if(JSONObject):
         credentials = Credentials.from_service_account_file(
             os.getenv('SLOT_DIALOGFLOW_LOCATION'))
@@ -50,6 +52,8 @@ def sendResponse(JSONObject):
         result = {'inputText': response.query_result.query_text, 'accountHead': intentName,
                   'confidence': confidence, 'outflow_tags': []}
 
+        print('\033[1m END OF ACCOUNTHEAD FUNCTION:' +
+              "{0:.5f}".format(time.time() - start) + '\033[0m')
         return result
     else:
         return "Request Failed."
@@ -72,6 +76,7 @@ def searchTags(inputString):
 
 
 def getTags(JSONObject):
+    start = time.time()
     if(JSONObject):
         content = JSONObject
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = r"../tags.json"
@@ -108,6 +113,8 @@ def getTags(JSONObject):
             listEntityname.append('miscellaneous')
         # remove duplicates
         listEntityname = list(set(listEntityname))
+        print('\033[1m END OF TAGS:' +
+              "{0:.5f}".format(time.time() - start) + '\033[0m')
         return {'outflow_tags': listEntityname}
     else:
         return {}
@@ -116,7 +123,7 @@ def getTags(JSONObject):
 @account_head.route('/accounthead/', methods=['GET', 'POST'])
 def add_message():
     # Async Process for Accounting Head
-
+    start = time.time()
     with concurrent.futures.ThreadPoolExecutor() as executor:
         future = executor.submit(sendResponse, request.json)
         future1 = executor.submit(getTags, request.json)
@@ -127,4 +134,6 @@ def add_message():
         newList.append(acHead["accountHead"])
         acHead["outflow_tags"] = newList
         print(str(acHead))
+        print('\033[1m END OF API CALL:' +
+              "{0:.5f}".format(time.time() - start) + '\033[0m')
         return jsonify(acHead)

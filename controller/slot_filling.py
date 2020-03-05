@@ -176,7 +176,7 @@ def filterResults(text):
 
 
 def getnotifyList(text):
-    a = re.findall(r' @(|\+)\w+', ' '+text)
+    a = re.findall(r'( @\+?\w+)', ' '+text)
     b = []
     for item in a:
         b.append(item.replace(' @', '').title())
@@ -266,7 +266,7 @@ def send_nlp_response():
 
     if(oldValue.askFor == 'None'):
         oldValue.notifyList = getnotifyList(inputText)
-        inputText = re.sub(r'@\w+ ', '', inputText+' ')
+        inputText = re.sub(r'( @\+?\w+)', '', inputText+' ')
 
     oldValue.Description = inputText if oldValue.Description == '' else oldValue.Description
 
@@ -469,8 +469,7 @@ def send_nlp_response():
         result = getBotReplyText('missing_frequency_question')
 
     if oldValue.askFor == oldValue.lastAsked:
-        result = getBotReplyText(
-            'repeat_question') + '\n' + result
+        result = getBotReplyText('repeat_question') + '\n\n' + result
     oldValue.lastAsked = oldValue.askFor
     sessionData = '{}' if('None' in oldValue.emptyList()
                           ) else jsonpickle.encode(oldValue)

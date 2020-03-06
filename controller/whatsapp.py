@@ -30,7 +30,7 @@ twilioKey = Table('whatsapp_company_twilio_accounts', metadata,
 sessionVariable = Table('whatsapp_user_active_sessions', metadata,
                         autoload=True, autoload_with=engine)
 
-phoneUsers = Table('whatsapp_company_phone_users', metadata,
+phoneUsers = Table('users', metadata,
                    autoload=True, autoload_with=engine)
 
 whatsapp_call = Blueprint('whatsapp', __name__)
@@ -77,7 +77,7 @@ def incoming_sms():
     start = time.time()
     account_sid = request.values.get('AccountSid', None)
     contactTo = str(request.values.get('From', None))
-    contactTo = contactTo.replace('whatsapp:+', '')
+    contactTo = contactTo.replace('whatsapp:', '')
 
     sidMode = os.getenv('WHATSAPP_ACCOUNT_MODE')
     externalCompanyId = ''
@@ -85,7 +85,7 @@ def incoming_sms():
         # get ext company id from phno in
         query = select([twilioKey.columns.auth_token])
         query = query.select_from(phoneUsers.join(twilioKey, and_(
-            twilioKey.columns.account_sid == account_sid, twilioKey.columns.external_company_id == phoneUsers.columns.external_company_id, phoneUsers.columns.contact_number == contactTo)))
+            twilioKey.columns.account_sid == account_sid, twilioKey.columns.external_company_id == phoneUsers.columns.company_id, phoneUsers.columns.whatsapp_no == contactTo)))
         ResultProxy = connection.execute(query)
         ResultSet = ResultProxy.fetchone()
         if not(ResultSet):
@@ -98,7 +98,7 @@ def incoming_sms():
     else:
         query = select([twilioKey.columns.auth_token,
                         twilioKey.columns.external_company_id])
-        query = query.select_from(twilioKey.join(phoneUsers, and_(twilioKey.columns.account_sid == account_sid, phoneUsers.columns.external_company_id == twilioKey.columns.external_company_id, phoneUsers.columns.contact_number == contactTo
+        query = query.select_from(twilioKey.join(phoneUsers, and_(twilioKey.columns.account_sid == account_sid, phoneUsers.columns.company_id == twilioKey.columns.external_company_id, phoneUsers.columns.whatsapp_no == contactTo
                                                                   )))
         ResultProxy = connection.execute(query)
         ResultSet = ResultProxy.fetchone()

@@ -248,14 +248,16 @@ def send_nlp_response():
     start = time.time()
     oldValue = lastEntry()
     req = request.get_json(force=True)
-    query = select([sessionVariable.columns.session_data]).where(
+    query = select([sessionVariable.columns.session_data, sessionVariable.columns.external_company_id]).where(
         sessionVariable.columns.session_id == str(req.get('session')))
 
     ResultProxy = connection.execute(query)
     ResultSet = ResultProxy.fetchone()
-
+    externalCompanyID = '1'
     if(ResultSet[0]):
         oldValue = jsonpickle.decode(ResultSet[0])
+    if(ResultSet[1]):
+        externalCompanyID = ResultSet[1]
     print('\033[1m FETCH SESSION FROM DB:' +
           "{0:.5f}".format(time.time() - start) + '\033[0m')
     inputText = str(req.get('queryResult').get('queryText'))
@@ -417,10 +419,10 @@ def send_nlp_response():
             "operationName": "CreateExpense",
             "variables": {
                 "input": {
-                    "company": "2",
+                    "company": externalCompanyID,
                     "title": oldValue.Description,
                     "description": oldValue.Description,
-                    "amount": str(oldValue.Amount),
+                    "amount": "{0:.2f}".format(float(oldValue.Amount)),
                     "currency": oldValue.currency,
                     "recurring": "true" if('Yes' in oldValue.recurrence) else "false",
                     "paymentStatus": oldValue.paymentStatus,

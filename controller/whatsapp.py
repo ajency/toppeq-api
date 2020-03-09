@@ -77,7 +77,7 @@ def incoming_sms():
     start = time.time()
     account_sid = request.values.get('AccountSid', None)
     contactTo = str(request.values.get('From', None))
-    contactTo = contactTo.replace('whatsapp:', '')
+    contactTo = contactTo.replace('whatsapp:', '')[-10:]
 
     sidMode = os.getenv('WHATSAPP_ACCOUNT_MODE')
     externalCompanyId = ''

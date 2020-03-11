@@ -4,12 +4,16 @@ from controller.slot_filling import slot_fill
 from controller.amount import amount
 from controller.date import date_object
 from controller.accounting_head import account_head
+from controller.refresh_agents import callRefresh
 from flask import Flask, request, make_response, jsonify, session
 import sys
 
 sys.path.append('../controller')
 
 app = Flask(__name__)
+
+# refreshing all the agents to reduce timeout delays
+callRefresh()
 
 # Registering blueprints for each file to be marked with routes
 app.register_blueprint(account_head, url_prefix='/api/')

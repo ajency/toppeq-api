@@ -33,6 +33,18 @@ sessionVariable = Table('whatsapp_user_active_sessions', metadata,
 phoneUsers = Table('users', metadata,
                    autoload=True, autoload_with=engine)
 
+sidModeTable = Table('defaults', metadata,
+                   autoload=True, autoload_with=engine)
+
+query = select([sidModeTable.columns.default_value]).where(
+    sidModeTable.columns.default_key == 'detect company ID')
+
+ResultProxy = connection.execute(query)
+ResultSet2 = ResultProxy.fetchone()   
+
+sidMode = ResultSet2[0]
+
+
 whatsapp_call = Blueprint('whatsapp', __name__)
 
 # Writes a Help Text Message to Whatsapp
@@ -79,7 +91,6 @@ def incoming_sms():
     contactTo = str(request.values.get('From', None))
     contactTo = contactTo.replace('whatsapp:', '')[-10:]
 
-    sidMode = os.getenv('WHATSAPP_ACCOUNT_MODE')
     externalCompanyId = ''
     if(sidMode == 'GLOBAL'):
         # get ext company id from phno in

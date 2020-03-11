@@ -37,7 +37,7 @@ sidModeTable = Table('defaults', metadata,
                    autoload=True, autoload_with=engine)
 
 query = select([sidModeTable.columns.default_value]).where(
-    sidModeTable.columns.default_key == 'detect company ID')
+    sidModeTable.columns.default_key == 'WHATSAPP_ACCOUNT_MODE')
 
 ResultProxy = connection.execute(query)
 ResultSet2 = ResultProxy.fetchone()   

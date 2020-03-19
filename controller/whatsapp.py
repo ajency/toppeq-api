@@ -92,11 +92,11 @@ def incoming_sms():
     contactTo = contactTo.replace('whatsapp:', '')[-10:]
 
     externalCompanyId = ''
-    if(sidMode == 'GLOBAL'):
+    if(sidMode == 'Global'):
         # get ext company id from phno in
-        query = select([twilioKey.columns.auth_token])
+        query = select([twilioKey.columns.auth_token,twilioKey.columns.account_sid])
         query = query.select_from(phoneUsers.join(twilioKey, and_(
-            twilioKey.columns.account_sid == account_sid, twilioKey.columns.external_company_id == phoneUsers.columns.company_id, phoneUsers.columns.whatsapp_no == contactTo)))
+             twilioKey.columns.external_company_id == None, phoneUsers.columns.whatsapp_no == contactTo)))
         ResultProxy = connection.execute(query)
         ResultSet = ResultProxy.fetchone()
         if not(ResultSet):
@@ -105,6 +105,7 @@ def incoming_sms():
             resp.message(languageText['failedCompanyMessage'])
             return str(resp)
         auth_token = ResultSet[0]
+        account_sid = ResultSet[1]
 
     else:
         query = select([twilioKey.columns.auth_token,

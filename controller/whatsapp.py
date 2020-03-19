@@ -94,7 +94,7 @@ def incoming_sms():
     externalCompanyId = ''
     if(sidMode == 'Global'):
         # get ext company id from phno in
-        query = select([twilioKey.columns.auth_token,twilioKey.columns.account_sid])
+        query = select([twilioKey.columns.auth_token,twilioKey.columns.account_sid,phoneUsers.columns.company_id])
         query = query.select_from(phoneUsers.join(twilioKey, and_(
              twilioKey.columns.external_company_id == None, phoneUsers.columns.whatsapp_no == contactTo)))
         ResultProxy = connection.execute(query)
@@ -106,7 +106,7 @@ def incoming_sms():
             return str(resp)
         auth_token = ResultSet[0]
         account_sid = ResultSet[1]
-
+        externalCompanyId = ResultSet[2]
     else:
         query = select([twilioKey.columns.auth_token,
                         twilioKey.columns.external_company_id])

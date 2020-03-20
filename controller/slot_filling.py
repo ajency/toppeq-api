@@ -218,7 +218,8 @@ def buildResultText(outputJSON):
     resultString += languageText['outputSummaryMessage8'] + \
         outputJSON['data']['createExpense']['accountingHead']['displayName']
     tagString = ','.join(
-        map(str, outputJSON['data']['createExpense']['expenseTags']))
+        map(str, outputJSON['data']['createExpense']['expenseTags'].lower() ) )
+    tagString = tagString.replace(' ','_')        
     resultString += languageText['outputSummaryMessage9'] + \
         tagString.replace(',', ', #')
 

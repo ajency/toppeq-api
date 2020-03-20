@@ -4,4 +4,4 @@ WA_DIALOGFLOW_PROJECT_ID = project ID of Dialogflow agent used for connecting to
 SLOT_DIALOGFLOW_PROJECT_ID = Project ID of Dialogflow agent used for NLP API
 SLOT_DIALOGFLOW_LOCATION = ../ url to JSON of Dialogflow agent used for NLP API
 ADD_EXPENSE_URL = URL for adding expense
-REACT_APP_URL = URL redirecting to the UI showing the expense
+REACT_APP_URL = Base URL redirecting to the UI showing the expense

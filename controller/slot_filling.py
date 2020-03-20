@@ -444,7 +444,7 @@ def send_nlp_response():
         try:
             response = requests.request(
                 "POST", url, headers=headers, data=json.dumps(payload))
-            OutputURL = languageText['successWhatsappMessage'] + os.getenv('REACT_APP_URL')
+            OutputURL = languageText['successWhatsappMessage'] + os.getenv('REACT_APP_URL') + languageText['whatsappMessageURLBase'] 
             outputJSON = response.json()
             print(outputJSON)
             if(outputJSON['data']['createExpense']['id']):

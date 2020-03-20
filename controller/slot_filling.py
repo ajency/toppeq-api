@@ -412,7 +412,7 @@ def send_nlp_response():
     print('\033[1m READY TO CALL API:' +
           "{0:.5f}".format(time.time() - start) + '\033[0m')
     if 'None' in oldValue.emptyList():
-        url = "https://ajency-qa.api.toppeq.com/graphql"
+        url = os.getenv('ADD_EXPENSE_URL')
         dateKey = "finalPaymentDate" if oldValue.paymentStatus == "Paid" else "expenseDueDate"
         dateValue = oldValue.paymentDate.strftime(r"%Y-%m-%d %H:%M:%S")
         payload = {
@@ -444,7 +444,7 @@ def send_nlp_response():
         try:
             response = requests.request(
                 "POST", url, headers=headers, data=json.dumps(payload))
-            OutputURL = languageText['successWhatsappMessage']
+            OutputURL = languageText['successWhatsappMessage'] + os.getenv('REACT_APP_URL')
             outputJSON = response.json()
             print(outputJSON)
             if(outputJSON['data']['createExpense']['id']):

@@ -48,7 +48,7 @@ def sendResponse(JSONObject):
         else:
             intentName = response.query_result.intent.display_name
 
-        intentName = intentName.lower().replace(" ", "_")
+        #intentName = intentName.lower().replace(" ", "_")
         result = {'inputText': response.query_result.query_text, 'accountHead': intentName,
                   'confidence': confidence, 'outflow_tags': []}
 
@@ -170,12 +170,12 @@ def trainData(intentName, trainingPhrases):
 
     intent.training_phrases.extend(training_phrases)
     response1 = client.update_intent(intent, language_code='en')
-    print(type(response1))
-    return 'Success, ' + str(name) + ' is trained'.
+    return 'Success, ' + str(intentName) + ' is trained'
 
 
 @account_head.route('/ACHeadTraining/', methods=['POST'])
 def trainDataset():
+    JSONObject = request.json 
     if(JSONObject):
         content = JSONObject
         return trainData(content['intentName'], content['trainingPhrases'])

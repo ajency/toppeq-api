@@ -137,3 +137,47 @@ def add_message():
         print('\033[1m END OF API CALL:' +
               "{0:.5f}".format(time.time() - start) + '\033[0m')
         return jsonify(acHead)
+
+
+def trainData(intentName, trainingPhrases):
+
+    credentials = Credentials.from_service_account_file(
+        os.getenv('SLOT_DIALOGFLOW_LOCATION'))
+    client = dialogflow_v2.IntentsClient(credentials=credentials)
+
+    parent = client.project_agent_path(os.getenv('SLOT_DIALOGFLOW_PROJECT_ID'))
+    intents = client.list_intents(parent)
+    intent_path = [
+        intent.name for intent in intents if intent.display_name == intentName]
+
+    client = dialogflow_v2.IntentsClient(credentials=credentials)
+
+    name = intent_path[0]
+
+    response = client.get_intent(name, intent_view='INTENT_VIEW_FULL')
+    intent = response
+    # create new instance of training phrase
+
+    training_phrases_parts = trainingPhrases
+    training_phrases = []
+    for training_phrases_part in training_phrases_parts:
+        part = dialogflow_v2.types.Intent.TrainingPhrase.Part(
+            text=training_phrases_part)
+        # Here we create a new training phrase for each provided part.
+        training_phrase = dialogflow_v2.types.Intent.TrainingPhrase(parts=[
+                                                                    part])
+        training_phrases.append(training_phrase)
+
+    intent.training_phrases.extend(training_phrases)
+    response1 = client.update_intent(intent, language_code='en')
+    print(type(response1))
+    return 'Success, ' + str(name) + ' is trained'.
+
+
+@account_head.route('/ACHeadTraining/', methods=['POST'])
+def trainDataset():
+    if(JSONObject):
+        content = JSONObject
+        return trainData(content['intentName'], content['trainingPhrases'])
+    else:
+        return 'Failed'

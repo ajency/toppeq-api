@@ -218,8 +218,8 @@ def buildResultText(outputJSON):
     resultString += languageText['outputSummaryMessage8'] + \
         outputJSON['data']['createExpense']['accountingHead']['displayName']
     tagString = ','.join(
-        map(str, outputJSON['data']['createExpense']['expenseTags'] ) )
-    tagString = tagString.replace(' ','_')        
+        map(str, outputJSON['data']['createExpense']['expenseTags']))
+    tagString = tagString.replace(' ', '_')
     resultString += languageText['outputSummaryMessage9'] + \
         tagString.replace(',', ', #').lower()
 
@@ -367,6 +367,8 @@ def send_nlp_response():
             oldValue.frequency = "Yearly"
         elif("monthly" in textString or "per month" in textString or "every month" in textString):
             oldValue.frequency = "Monthly"
+        elif("quarterly" in textString or "per quarter" in textString or "every quarter" in textString):
+            oldValue.frequency = "Quarterly"
 
     # Check if Dialogflow had picked up a date (18th, last wednesday)
     if(oldValue.askFor == 'Date' or oldValue.askFor == 'None'):
@@ -445,7 +447,8 @@ def send_nlp_response():
         try:
             response = requests.request(
                 "POST", url, headers=headers, data=json.dumps(payload))
-            OutputURL = languageText['successWhatsappMessage'] + os.getenv('REACT_APP_URL') + languageText['whatsappMessageURLBase'] 
+            OutputURL = languageText['successWhatsappMessage'] + os.getenv(
+                'REACT_APP_URL') + languageText['whatsappMessageURLBase']
             outputJSON = response.json()
             print(outputJSON)
             if(outputJSON['data']['createExpense']['id']):

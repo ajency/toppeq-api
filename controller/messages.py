@@ -21,7 +21,7 @@ def entityMessage(status):
 
 
 def frequencyMessage():
-    return 'How frequently would this expense repeat?  \n(Yearly, Monthly, Weekly, Daily)'
+    return 'How frequently would this expense repeat?  \n(Yearly, Monthly, Weekly, Quarterly)'
 
 
 def getBotReplyText(textType, options='none'):

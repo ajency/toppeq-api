@@ -144,6 +144,7 @@ def incoming_sms():
         query = update(sessionVariable).values(last_updated=datetime.now()).where(and_(
             sessionVariable.columns.external_company_id == str(externalCompanyId), sessionVariable.columns.contact_number == contactTo))
         ResultProxy = connection.execute(query)
+        
 
     else:
         session_generation = str(int(time.time())) + str(contactTo)

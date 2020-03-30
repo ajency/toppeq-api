@@ -42,6 +42,9 @@ twilioKey = Table('whatsapp_company_twilio_accounts', metadata,
 sessionVariable = Table('whatsapp_user_active_sessions', metadata,
                         autoload=True, autoload_with=engine)
 
+phoneUsers = Table('users', metadata,
+                   autoload=True, autoload_with=engine)
+
 slot_fill = Blueprint('slot_fill', __name__)
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv(
@@ -249,16 +252,23 @@ def send_nlp_response():
     start = time.time()
     oldValue = lastEntry()
     req = request.get_json(force=True)
-    query = select([sessionVariable.columns.session_data, sessionVariable.columns.external_company_id]).where(
+    query = select([sessionVariable.columns.session_data, sessionVariable.columns.external_company_id, sessionVariable.columns.contact_number]).where(
         sessionVariable.columns.session_id == str(req.get('session')))
 
     ResultProxy = connection.execute(query)
     ResultSet = ResultProxy.fetchone()
     externalCompanyID = '1'
+    contactNumber = ''
     if(ResultSet[0]):
         oldValue = jsonpickle.decode(ResultSet[0])
     if(ResultSet[1]):
         externalCompanyID = ResultSet[1]
+    if(ResultSet[2]):
+        query1 = select([phoneUsers.columns.country_code]).where(
+            phoneUsers.columns.whatsapp_no == str(ResultSet[2]))
+        ResultProxy1 = connection.execute(query1)
+        ResultSet1 = ResultProxy1.fetchone()
+        contactNumber = "+" + ResultSet1[0] + ResultSet[2]
     print('\033[1m FETCH SESSION FROM DB:' +
           "{0:.5f}".format(time.time() - start) + '\033[0m')
     inputText = str(req.get('queryResult').get('queryText'))
@@ -431,6 +441,7 @@ def send_nlp_response():
                     "paymentStatus": oldValue.paymentStatus,
                     "sourceDriver": "chatbot",
                     "status": "draft",
+                    "chatbotUserPhone": contactNumber,
                     "expenseRecurrence": {
                         "frequency": oldValue.frequency
                     },

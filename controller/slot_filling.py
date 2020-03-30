@@ -236,7 +236,18 @@ def buildResultText(outputJSON):
     customUserList = (outputJSON['data']['createExpense']['notifyCustomUsers'])
     if(customUserList):
         outputUsers += (' '+customUserList + ',')
-    resultString += (languageText['outputSummaryMessage10'] + outputUsers[:-1])
+
+    # remove duplicates
+    list1 = list(outputUsers.split(","))
+    list2 = []
+    for words in list1:
+        words1 = re.sub(r' - \+[0-9]+', '', words)
+        list2.append(words1)
+
+    list3 = list(dict.fromkeys(list2))
+    outputUsers = ','.join(list3)
+
+    resultString += (languageText['outputSummaryMessage10'] + outputUsers)
 
     return resultString
 
@@ -268,7 +279,7 @@ def send_nlp_response():
             phoneUsers.columns.whatsapp_no == str(ResultSet[2]))
         ResultProxy1 = connection.execute(query1)
         ResultSet1 = ResultProxy1.fetchone()
-        contactNumber = "+" + ResultSet1[0] + ResultSet[2]
+        contactNumber = "+" + str(ResultSet1[0]) + str(ResultSet[2])
     print('\033[1m FETCH SESSION FROM DB:' +
           "{0:.5f}".format(time.time() - start) + '\033[0m')
     inputText = str(req.get('queryResult').get('queryText'))

@@ -34,13 +34,13 @@ phoneUsers = Table('users', metadata,
                    autoload=True, autoload_with=engine)
 
 sidModeTable = Table('defaults', metadata,
-                     autoload=True, autoload_with=engine)
+                   autoload=True, autoload_with=engine)
 
 query = select([sidModeTable.columns.default_value]).where(
     sidModeTable.columns.default_key == 'WHATSAPP_ACCOUNT_MODE')
 
 ResultProxy = connection.execute(query)
-ResultSet2 = ResultProxy.fetchone()
+ResultSet2 = ResultProxy.fetchone()   
 
 sidMode = ResultSet2[0]
 
@@ -94,10 +94,9 @@ def incoming_sms():
     externalCompanyId = ''
     if(sidMode == 'Global'):
         # get ext company id from phno in
-        query = select([twilioKey.columns.auth_token,
-                        twilioKey.columns.account_sid, phoneUsers.columns.company_id])
+        query = select([twilioKey.columns.auth_token,twilioKey.columns.account_sid,phoneUsers.columns.company_id])
         query = query.select_from(phoneUsers.join(twilioKey, and_(
-            twilioKey.columns.external_company_id == None, phoneUsers.columns.whatsapp_no == contactTo)))
+             twilioKey.columns.external_company_id == None, phoneUsers.columns.whatsapp_no == contactTo)))
         ResultProxy = connection.execute(query)
         ResultSet = ResultProxy.fetchone()
         if not(ResultSet):
@@ -139,22 +138,17 @@ def incoming_sms():
 
     ResultProxy = connection.execute(query)
     ResultSet = ResultProxy.fetchone()
-    session_generation = str(int(time.time())) + str(contactTo)
-    session = client.session_path(
-        os.getenv('WA_DIALOGFLOW_PROJECT_ID'), session_generation)
+
     if(ResultSet):
         session = ResultSet[0]
-
-        query = delete(sessionVariable)
-        query = query.where(and_(
+        query = update(sessionVariable).values(last_updated=datetime.now()).where(and_(
             sessionVariable.columns.external_company_id == str(externalCompanyId), sessionVariable.columns.contact_number == contactTo))
-        results = connection.execute(query)
-
-        query = insert(sessionVariable).values(
-            external_company_id=externalCompanyId, contact_number=contactTo, session_id=str(session), last_updated=datetime.now())
         ResultProxy = connection.execute(query)
-
     else:
+        session_generation = str(int(time.time())) + str(contactTo)
+        session = client.session_path(
+            os.getenv('WA_DIALOGFLOW_PROJECT_ID'), session_generation)
+
         query = insert(sessionVariable).values(
             external_company_id=externalCompanyId, contact_number=contactTo, session_id=str(session), last_updated=datetime.now())
         ResultProxy = connection.execute(query)

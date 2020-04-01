@@ -247,7 +247,7 @@ def buildResultText(outputJSON):
     list3 = list(dict.fromkeys(list2))
     outputUsers = ','.join(list3)
 
-    resultString += (languageText['outputSummaryMessage10'] + outputUsers)
+    resultString += (languageText['outputSummaryMessage10'] + outputUsers[:-1])
 
     return resultString
 

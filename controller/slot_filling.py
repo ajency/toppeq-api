@@ -363,6 +363,21 @@ def send_nlp_response():
                 if(int(maxValue) > 0):
                     oldValue.Amount = maxValue
 
+    # Detect Tense for Paid/Unpaid
+    if(oldValue.askFor == 'None'):
+        checkTense = 0
+        for token in response.tokens:
+            # 3 = enum for Past
+            if(token.part_of_speech.tense == 3):
+                oldValue.paymentStatus = "Paid"
+                checkTense = 1
+
+        if checkTense == 0:
+            introduction_doc = nlp(filteredText.lower())
+            for token in introduction_doc:
+                if(token.tag_ == 'VBD' or token.tag_ == 'VBN'):
+                    oldValue.paymentStatus = "Paid"
+
     # Step 3.5 Detect Recurrence
 
     if(oldValue.ExpenseType == ''):
@@ -416,20 +431,14 @@ def send_nlp_response():
             except:
                 print('Date Error')
 
-    # Detect Tense for Paid/Unpaid
-    if(oldValue.askFor == 'None'):
-        checkTense = 0
-        for token in response.tokens:
-            # 3 = enum for Past
-            if(token.part_of_speech.tense == 3):
-                oldValue.paymentStatus = "Paid"
-                checkTense = 1
-
-        if checkTense == 0:
-            introduction_doc = nlp(filteredText.lower())
-            for token in introduction_doc:
-                if(token.tag_ == 'VBD' or token.tag_ == 'VBN'):
-                    oldValue.paymentStatus = "Paid"
+        if(oldValue.paymentDate != ''):
+            timenow = datetime.now()
+            if(oldValue.paymentStatus == "Paid"):
+                if(timenow < oldValue.paymentDate):
+                    oldValue.paymentDate = ''
+            else:
+                if(timenow > oldValue.paymentDate):
+                    oldValue.paymentDate = ''
 
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()

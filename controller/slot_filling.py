@@ -18,7 +18,7 @@ from dialogflow_v2 import types
 from google.cloud import language_v1, language
 from google.cloud.language_v1 import enums, types
 from text2digits import text2digits
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from controller.accounting_head import sendResponse, getTags
 from controller.messages import *
 from datetime import datetime
@@ -219,9 +219,9 @@ def buildResultText(outputJSON):
             outputJSON['data']['createExpense']['expenseRecurrence']['frequency']
 
     resultString += languageText['outputSummaryMessage8'] + \
-        outputJSON['data']['createExpense']['accountingHead']['displayName']
+        outputJSON['data']['createExpense']['accountingHead']['displayName'].title()
     tagString = ','.join(
-        map(str, outputJSON['data']['createExpense']['expenseTags']))
+        map(str, outputJSON['data']['createExpense']['expenseTags'])).title()
     tagString = tagString.replace(' ', '_')
     resultString += languageText['outputSummaryMessage9'] + \
         tagString.replace(',', ', #').lower()
@@ -334,6 +334,10 @@ def send_nlp_response():
 
     oldValue.fullEntity = changeVar
 
+    # if user is asked for entity, add it to description.
+    if(oldValue.askFor == 'Entity'):
+        oldValue.Description += " - ["+oldValue.entitySend+"]"
+
     # Step 3.1: if price is detected by NLP, mark it with currency
     if(oldValue.askFor == 'Amount' or oldValue.askFor == 'None'):
         flag = 0 if(oldValue.Amount == '0') else 1
@@ -412,7 +416,7 @@ def send_nlp_response():
         if(oldValue.paymentDate == ''):
             if(req.get('queryResult').get('parameters').get('date')):
                 oldValue.paymentDate = dateparser.parse(
-                    str(req.get('queryResult').get('parameters').get('date')))
+                    str(req.get('queryResult').get('parameters').get('date'))).replace(tzinfo=None)
 
                 if(str(int(float(oldValue.Amount))) in str(req.get('queryResult').get('parameters').get('date')) and oldValue.askFor == 'None'):
                     oldValue.Amount = '0'
@@ -422,7 +426,7 @@ def send_nlp_response():
                 if(req.get('queryResult').get('parameters').get('date-period') != ''):
                     if(req.get('queryResult').get('parameters').get('date-period').get('endDate')):
                         oldValue.paymentDate = dateparser.parse(
-                            req.get('queryResult').get('parameters').get('date-period').get('endDate'))
+                            req.get('queryResult').get('parameters').get('date-period').get('endDate')).replace(tzinfo=None)
 
                     # If the number caught by amount is in date, negate that.
                     if(str(int(float(oldValue.Amount))) in str(req.get('queryResult').get('parameters').get('date')) and oldValue.askFor == 'None'):
@@ -431,14 +435,14 @@ def send_nlp_response():
             except:
                 print('Date Error')
 
-        if(oldValue.paymentDate != ''):
-            timenow = datetime.now()
-            if(oldValue.paymentStatus == "Paid"):
-                if(timenow < oldValue.paymentDate):
-                    oldValue.paymentDate = ''
-            else:
-                if(timenow > oldValue.paymentDate):
-                    oldValue.paymentDate = ''
+        # if(oldValue.paymentDate != ''):
+        #     timenow = datetime.now(timezone.utc)
+        #     if(oldValue.paymentStatus == "Paid"):
+        #         if(timenow < oldValue.paymentDate):
+        #             oldValue.paymentDate = ''
+        #     else:
+        #         if(timenow > oldValue.paymentDate):
+        #             oldValue.paymentDate = ''
 
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()

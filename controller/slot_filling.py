@@ -412,6 +412,10 @@ def send_nlp_response():
 
     # Check if Dialogflow had picked up a date (18th, last wednesday)
     if(oldValue.askFor == 'Date' or oldValue.askFor == 'None'):
+        if(oldValue.askFor == 'Date'):
+            datePick = dateparser.parse(
+                filteredText.title()).replace(tzinfo=None)
+            oldValue.paymentDate = datePick if datePick == None else ''
 
         if(oldValue.paymentDate == ''):
             if(req.get('queryResult').get('parameters').get('date')):
@@ -435,14 +439,15 @@ def send_nlp_response():
             except:
                 print('Date Error')
 
-        # if(oldValue.paymentDate != ''):
-        #     timenow = datetime.now(timezone.utc)
-        #     if(oldValue.paymentStatus == "Paid"):
-        #         if(timenow < oldValue.paymentDate):
-        #             oldValue.paymentDate = ''
-        #     else:
-        #         if(timenow > oldValue.paymentDate):
-        #             oldValue.paymentDate = ''
+        if(oldValue.paymentDate != ''):
+            timenow = datetime.now().replace(tzinfo=None)
+            timePayment = oldValue.paymentDate.replace(tzinfo=None)
+            if(oldValue.paymentStatus == "Paid"):
+                if(timenow < timePayment):
+                    oldValue.paymentDate = ''
+            else:
+                if(timenow > timePayment):
+                    oldValue.paymentDate = ''
 
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()
@@ -451,7 +456,8 @@ def send_nlp_response():
     if 'None' in oldValue.emptyList():
         url = os.getenv('ADD_EXPENSE_URL')
         dateKey = "finalPaymentDate" if oldValue.paymentStatus == "Paid" else "expenseDueDate"
-        dateValue = oldValue.paymentDate.strftime(r"%Y-%m-%d %H:%M:%S")
+        dateValue = oldValue.paymentDate.replace(
+            tzinfo=None).strftime(r"%Y-%m-%d %H:%M:%S")
         payload = {
             "operationName": "CreateExpense",
             "variables": {

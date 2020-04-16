@@ -257,6 +257,11 @@ def clearDB(sessionData, sessionID):
         sessionVariable.columns.session_id == sessionID)
     ResultProxy = connection.execute(query)
 
+def datePeriod(startDate, endDate):
+    timeDelta = endDate - startDate
+    print("Value: ")
+    print(type(timeDelta))
+
 # Webhook function to return response  to Twilio webhook
 @slot_fill.route('/slotfill/', methods=['GET', 'POST'])
 def send_nlp_response():
@@ -336,7 +341,7 @@ def send_nlp_response():
 
     # if user is asked for entity, add it to description.
     if(oldValue.askFor == 'Entity'):
-        oldValue.Description += " - ["+oldValue.entitySend+"]"
+        oldValue.Description += " - "+oldValue.entitySend[:-1]
 
     # Step 3.1: if price is detected by NLP, mark it with currency
     if(oldValue.askFor == 'Amount' or oldValue.askFor == 'None'):
@@ -414,13 +419,13 @@ def send_nlp_response():
     if(oldValue.askFor == 'Date' or oldValue.askFor == 'None'):
         if(oldValue.askFor == 'Date'):
             datePick = dateparser.parse(
-                filteredText.title()).replace(tzinfo=None)
-            oldValue.paymentDate = datePick if datePick == None else ''
+                filteredText.title())
+            oldValue.paymentDate = datePick if datePick != None else ''
 
         if(oldValue.paymentDate == ''):
             if(req.get('queryResult').get('parameters').get('date')):
                 oldValue.paymentDate = dateparser.parse(
-                    str(req.get('queryResult').get('parameters').get('date'))).replace(tzinfo=None)
+                    str(req.get('queryResult').get('parameters').get('date')))
 
                 if(str(int(float(oldValue.Amount))) in str(req.get('queryResult').get('parameters').get('date')) and oldValue.askFor == 'None'):
                     oldValue.Amount = '0'
@@ -429,8 +434,14 @@ def send_nlp_response():
             try:
                 if(req.get('queryResult').get('parameters').get('date-period') != ''):
                     if(req.get('queryResult').get('parameters').get('date-period').get('endDate')):
+                        startDate = req.get('queryResult').get(
+                            'parameters').get('date-period').get('startDate')
+                        endDate = req.get('queryResult').get(
+                            'parameters').get('date-period').get('endDate')
+                        print("date = "+str(endDate - startDate))
+                        datePeriod(startDate,endDate)
                         oldValue.paymentDate = dateparser.parse(
-                            req.get('queryResult').get('parameters').get('date-period').get('endDate')).replace(tzinfo=None)
+                            req.get('queryResult').get('parameters').get('date-period').get('endDate'))
 
                     # If the number caught by amount is in date, negate that.
                     if(str(int(float(oldValue.Amount))) in str(req.get('queryResult').get('parameters').get('date')) and oldValue.askFor == 'None'):
@@ -439,15 +450,15 @@ def send_nlp_response():
             except:
                 print('Date Error')
 
-        if(oldValue.paymentDate != ''):
-            timenow = datetime.now().replace(tzinfo=None)
-            timePayment = oldValue.paymentDate.replace(tzinfo=None)
-            if(oldValue.paymentStatus == "Paid"):
-                if(timenow < timePayment):
-                    oldValue.paymentDate = ''
-            else:
-                if(timenow > timePayment):
-                    oldValue.paymentDate = ''
+        # if(oldValue.paymentDate != ''):
+        #     timenow = datetime.now().replace(tzinfo=None)
+        #     timePayment = oldValue.paymentDate.replace(tzinfo=None)
+        #     if(oldValue.paymentStatus == "Paid"):
+        #         if(timenow < timePayment):
+        #             oldValue.paymentDate = ''
+        #     else:
+        #         if(timenow > timePayment):
+        #             oldValue.paymentDate = ''
 
     print('Missing Value = ' + oldValue.emptyList())
     oldValue.askFor = oldValue.emptyList()
@@ -456,8 +467,8 @@ def send_nlp_response():
     if 'None' in oldValue.emptyList():
         url = os.getenv('ADD_EXPENSE_URL')
         dateKey = "finalPaymentDate" if oldValue.paymentStatus == "Paid" else "expenseDueDate"
-        dateValue = oldValue.paymentDate.replace(
-            tzinfo=None).strftime(r"%Y-%m-%d %H:%M:%S")
+        dateValue = oldValue.paymentDate.replace(hour=0, minute=0, second=0, microsecond=0,
+                                                 tzinfo=None).strftime(r"%Y-%m-%d %H:%M:%S")
         payload = {
             "operationName": "CreateExpense",
             "variables": {

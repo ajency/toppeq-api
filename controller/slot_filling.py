@@ -257,6 +257,7 @@ def clearDB(sessionData, sessionID):
         sessionVariable.columns.session_id == sessionID)
     ResultProxy = connection.execute(query)
 
+
 def datePeriod(startDate, endDate):
     timeDelta = endDate - startDate
     print("Value: ")
@@ -421,6 +422,7 @@ def send_nlp_response():
             datePick = dateparser.parse(
                 filteredText.title())
             oldValue.paymentDate = datePick if datePick != None else ''
+            print("Date Parsed")
 
         if(oldValue.paymentDate == ''):
             if(req.get('queryResult').get('parameters').get('date')):
@@ -430,25 +432,21 @@ def send_nlp_response():
                 if(str(int(float(oldValue.Amount))) in str(req.get('queryResult').get('parameters').get('date')) and oldValue.askFor == 'None'):
                     oldValue.Amount = '0'
 
-            # Check if Dialogflow had picked up a date (this month, next june, last year)
-            try:
-                if(req.get('queryResult').get('parameters').get('date-period') != ''):
-                    if(req.get('queryResult').get('parameters').get('date-period').get('endDate')):
-                        startDate = req.get('queryResult').get(
-                            'parameters').get('date-period').get('startDate')
-                        endDate = req.get('queryResult').get(
-                            'parameters').get('date-period').get('endDate')
-                        print("date = "+str(endDate - startDate))
-                        datePeriod(startDate,endDate)
-                        oldValue.paymentDate = dateparser.parse(
-                            req.get('queryResult').get('parameters').get('date-period').get('endDate'))
+        # Check if Dialogflow had picked up a date (this month, next june, last year)
+        if(req.get('queryResult').get('parameters').get('date-period') != '' and oldValue.paymentDate == ''):
+            if(req.get('queryResult').get('parameters').get('date-period').get('endDate')):
+                startDate = req.get('queryResult').get(
+                    'parameters').get('date-period').get('startDate')
+                endDate = req.get('queryResult').get(
+                    'parameters').get('date-period').get('endDate')
+                print("date = "+str(endDate - startDate))
+                datePeriod(startDate, endDate)
+                oldValue.paymentDate = dateparser.parse(
+                    req.get('queryResult').get('parameters').get('date-period').get('endDate'))
 
-                    # If the number caught by amount is in date, negate that.
-                    if(str(int(float(oldValue.Amount))) in str(req.get('queryResult').get('parameters').get('date')) and oldValue.askFor == 'None'):
-                        oldValue.Amount = '0'
-
-            except:
-                print('Date Error')
+            # If the number caught by amount is in date, negate that.
+            if(str(int(float(oldValue.Amount))) in str(req.get('queryResult').get('parameters').get('date')) and oldValue.askFor == 'None'):
+                oldValue.Amount = '0'
 
         # if(oldValue.paymentDate != ''):
         #     timenow = datetime.now().replace(tzinfo=None)

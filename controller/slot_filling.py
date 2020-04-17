@@ -260,8 +260,28 @@ def clearDB(sessionData, sessionID):
 
 def datePeriod(startDate, endDate):
     timeDelta = endDate - startDate
-    print("Value: ")
-    print(type(timeDelta))
+    returnValue = None
+    today = datetime.datetime.today()
+
+    if(datetime.timedelta(weeks=1, hour=23) < timeDelta):
+        print("Week")
+        count = 0
+        while(count < 7):
+            dayCheck = startDate + datetime.timedelta(days=count) 
+            if(dayCheck.weekday == today.weekday):
+                count += 10
+                returnValue = startDate + datetime.timedelta(days=count)
+            else:
+                count += 1
+        # else return value
+    elif(datetime.timedelta(months=1, hour=23) < timeDelta):
+        print("Month")
+        returnValue = startDate.replace(day=today.day)
+    elif(datetime.timedelta(year=1, hour=23) < timeDelta):
+        print("Year")
+        returnValue = startDate.replace(day=today.day, month=today.month)
+    return returnValue
+
 
 # Webhook function to return response  to Twilio webhook
 @slot_fill.route('/slotfill/', methods=['GET', 'POST'])
@@ -439,9 +459,10 @@ def send_nlp_response():
                     'parameters').get('date-period').get('startDate')
                 endDate = req.get('queryResult').get(
                     'parameters').get('date-period').get('endDate')
-                print("date = "+str(endDate - startDate))
-                datePeriod(startDate, endDate)
-                oldValue.paymentDate = dateparser.parse(
+                print(str(dateparser.parse(endDate) - dateparser.parse(startDate)))
+                dateVal = datePeriod(dateparser.parse(
+                    startDate), dateparser.parse(endDate))
+                oldValue.paymentDate = dateVal or dateparser.parse(
                     req.get('queryResult').get('parameters').get('date-period').get('endDate'))
 
             # If the number caught by amount is in date, negate that.
